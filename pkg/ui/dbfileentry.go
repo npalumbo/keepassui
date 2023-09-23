@@ -8,7 +8,7 @@ import (
 	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
-	"log"
+	"log/slog"
 )
 
 type DBFileEntry struct {
@@ -23,7 +23,7 @@ func CreateDBFileEntry(parent fyne.Window) DBFileEntry {
 			if err == nil && dir != nil {
 				err = pathBinding.Set(dir.URI().Path())
 				if err != nil {
-					log.Printf("Error setting path: %v", err)
+					slog.Error("Error setting path: %s", dir.URI().Path(), err)
 				}
 			}
 		}, parent)

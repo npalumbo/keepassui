@@ -7,7 +7,7 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 	"keepassui/pkg/keepass"
-	"log"
+	"log/slog"
 )
 
 type KeyList struct {
@@ -20,7 +20,7 @@ type KeyList struct {
 func (k *KeyList) DataChanged() {
 	err := k.elements.Set([]string{})
 	if err != nil {
-		log.Printf("Error initialising elements %v", err)
+		slog.Error("Error initialising elements", err)
 	}
 	o, err := k.dbPathAndPassword.Get()
 	if err == nil && o != nil {
@@ -30,13 +30,13 @@ func (k *KeyList) DataChanged() {
 				secrets, err := keepass.ReadEntries(d.Path, d.Password)
 
 				if err != nil {
-					log.Printf("Error reading secret entries: %v", err)
+					slog.Error("Error reading secret entries", err)
 					dialog.ShowError(errors.New("Error reading secrets: "+err.Error()), k.parent)
 				} else {
 					for _, secretEntry := range secrets {
 						err = k.elements.Append(secretEntry.Path + " | " + secretEntry.Title)
 						if err != nil {
-							log.Printf("Error appending entries to list %v", err)
+							slog.Error("Error appending entries to list", err)
 						}
 					}
 				}

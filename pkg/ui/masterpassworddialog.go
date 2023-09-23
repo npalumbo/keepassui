@@ -5,7 +5,7 @@ import (
 	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
-	"log"
+	"log/slog"
 )
 
 type MasterPasswordDialog struct {
@@ -30,11 +30,13 @@ func CreateDialog(path binding.String, parent fyne.Window) MasterPasswordDialog 
 					Password: passwordEntry.Text,
 				})
 				if err != nil {
-					log.Printf("Error updating Path and Password %v", err)
+					slog.Error("Error updating Path and Password", err)
 				}
+			} else {
+				slog.Error("You have to enter a password")
 			}
 		} else {
-			log.Println("Didn't get password")
+			slog.Error("invalid password")
 		}
 	}, parent)
 	dialog.Resize(fyne.NewSize(400, 100))
