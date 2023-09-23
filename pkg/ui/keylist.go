@@ -1,8 +1,10 @@
 package ui
 
 import (
+	"errors"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/data/binding"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 	"keepassui/pkg/keepass"
 	"log"
@@ -12,6 +14,7 @@ type KeyList struct {
 	dbPathAndPassword binding.Untyped
 	elements          binding.StringList
 	listWidget        *widget.List
+	parent            fyne.Window
 }
 
 func (k *KeyList) DataChanged() {
@@ -28,6 +31,7 @@ func (k *KeyList) DataChanged() {
 
 				if err != nil {
 					log.Printf("Error reading secret entries: %v", err)
+					dialog.ShowError(errors.New("Error reading secrets: "+err.Error()), k.parent)
 				} else {
 					for _, secretEntry := range secrets {
 						err = k.elements.Append(secretEntry.Path + " | " + secretEntry.Title)
@@ -39,9 +43,10 @@ func (k *KeyList) DataChanged() {
 			}
 		}
 	}
+	k.listWidget.Resize(k.listWidget.Size().AddWidthHeight(0, float32(k.elements.Length()*20)))
 }
 
-func CreatekeyList(dbPathAndPassword binding.Untyped) KeyList {
+func CreatekeyList(dbPathAndPassword binding.Untyped, parent fyne.Window) KeyList {
 	elements := binding.NewStringList()
 	listWidget := widget.NewListWithData(elements,
 		func() fyne.CanvasObject {
@@ -61,5 +66,6 @@ func CreatekeyList(dbPathAndPassword binding.Untyped) KeyList {
 		dbPathAndPassword: dbPathAndPassword,
 		elements:          elements,
 		listWidget:        listWidget,
+		parent:            parent,
 	}
 }

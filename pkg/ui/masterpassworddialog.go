@@ -11,34 +11,21 @@ import (
 type MasterPasswordDialog struct {
 	dbPathAndPassword binding.Untyped
 	path              binding.String
+	dialog            dialog.Dialog
 }
 
-func CreateDialog(path binding.String) MasterPasswordDialog {
-	return MasterPasswordDialog{
-		path:              path,
-		dbPathAndPassword: binding.NewUntyped(),
-	}
-}
-
-func (m MasterPasswordDialog) AddListener(l binding.DataListener) {
-	m.dbPathAndPassword.AddListener(l)
-}
-
-type Data struct {
-	Path     string
-	Password string
-}
-
-func (m MasterPasswordDialog) ShowDialog(parent fyne.Window) {
+func CreateDialog(path binding.String, parent fyne.Window) MasterPasswordDialog {
 	formItems := []*widget.FormItem{}
 	passwordEntry := widget.NewPasswordEntry()
 	passwordEntry.SetPlaceHolder("KeyPass DB password")
 	formItems = append(formItems, widget.NewFormItem("password", passwordEntry))
-	form := dialog.NewForm("Enter master password", "Confirm", "Cancel", formItems, func(valid bool) {
+	dbPathAndPassword := binding.NewUntyped()
+
+	dialog := dialog.NewForm("Enter master password", "Confirm", "Cancel", formItems, func(valid bool) {
 		if valid {
 			if passwordEntry.Text != "" {
-				path, _ := m.path.Get()
-				err := m.dbPathAndPassword.Set(Data{
+				path, _ := path.Get()
+				err := dbPathAndPassword.Set(Data{
 					Path:     path,
 					Password: passwordEntry.Text,
 				})
@@ -50,6 +37,25 @@ func (m MasterPasswordDialog) ShowDialog(parent fyne.Window) {
 			log.Println("Didn't get password")
 		}
 	}, parent)
-	form.Resize(fyne.NewSize(400, 100))
-	form.Show()
+	dialog.Resize(fyne.NewSize(400, 100))
+
+	return MasterPasswordDialog{
+		path:              path,
+		dbPathAndPassword: dbPathAndPassword,
+		dialog:            dialog,
+	}
+
+}
+
+func (m MasterPasswordDialog) AddListener(l binding.DataListener) {
+	m.dbPathAndPassword.AddListener(l)
+}
+
+type Data struct {
+	Path     string
+	Password string
+}
+
+func (m MasterPasswordDialog) ShowDialog() {
+	m.dialog.Show()
 }
