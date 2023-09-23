@@ -17,7 +17,7 @@ build-multi-arch: ## Builds keepassui go binary for linux and darwin. Outputs to
 
 build: check## Builds keepassui go binary for local arch. Outputs to `bin/keepassui`
 	@echo "== build"
-	CGO_ENABLED=0 go build -o bin/ ./...
+	CGO_ENABLED=1 go build -o bin/ ./...
 
 ##@ Cleanup
 clean: ## Deletes binaries from the bin folder
@@ -27,7 +27,7 @@ clean: ## Deletes binaries from the bin folder
 ##@ Tests
 test: tools ## Run unit tests
 	@echo "== unit test"
-	go test pkg/*.go
+	go test ./...
 
 ##@ Run static checks
 check: tools ## Runs lint, fmt and vet checks against the codebase
