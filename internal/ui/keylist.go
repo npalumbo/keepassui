@@ -34,7 +34,7 @@ func (k *KeyList) DataChanged() {
 					dialog.ShowError(errors.New("Error reading secrets: "+err.Error()), k.parent)
 				} else {
 					for _, secretEntry := range secrets {
-						err = k.elements.Append(secretEntry.Path + " | " + secretEntry.Title)
+						err = k.elements.Append(secretEntry.Path + " | " + secretEntry.Title + ": " + secretEntry.Password)
 						if err != nil {
 							slog.Error("Error appending entries to list", err)
 						}
