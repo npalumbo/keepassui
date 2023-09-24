@@ -6,7 +6,7 @@ import (
 	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
-	"keepassui/pkg/keepass"
+	"keepassui/internal/keepass"
 	"log/slog"
 )
 

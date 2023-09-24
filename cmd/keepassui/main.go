@@ -3,7 +3,7 @@ package main
 import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
-	"keepassui/pkg/ui"
+	"keepassui/internal/ui"
 )
 
 func main() {

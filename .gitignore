@@ -27,4 +27,4 @@ bin/
 go.work
 
 # failed test data
-pkg/ui/testdata/failed
+internal/ui/testdata/failed
