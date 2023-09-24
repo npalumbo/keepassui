@@ -1,3 +1,5 @@
+![License](https://img.shields.io/github/license/npalumbo/keepassui) ![Build Status](https://github.com/npalumbo/keepassui/actions/workflows/run_tests.yaml/badge.svg)  ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/npalumbo/keepassui/main) 
+
 # KeepassUI
 A password manager port of [Keepass](https://keepass.info/). Built using the [gokeepasslib](https://github.com/tobischo/gokeepasslib) and [fyne](https://github.com/fyne-io/fyne) libraries.
 
