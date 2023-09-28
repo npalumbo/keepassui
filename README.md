@@ -4,7 +4,7 @@
 A password manager port of [Keepass](https://keepass.info/). Built using the [gokeepasslib](https://github.com/tobischo/gokeepasslib) and [fyne](https://github.com/fyne-io/fyne) libraries.
 
 ## Motivation
-I noticed that some of the commercial password managers don't support desktop and mobile versions at the same time on their free versions. We can solve that problem using Keepass](https://keepass.info/). 
+I noticed that some of the commercial password managers don't support desktop and mobile versions at the same time on their free versions. We can solve that problem using [Keepass](https://keepass.info/). 
 Additionally, Keepass has [many ports](https://keepass.info/download.html), many of them to specific target platforms like Mac or Android. I thought it was interesting to explore writing a Keepass UI that can be released on many platforms from the same codebase!.
 
 ## Goal
