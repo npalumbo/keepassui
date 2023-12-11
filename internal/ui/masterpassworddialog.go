@@ -1,17 +1,19 @@
 package ui
 
 import (
+	"log/slog"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
-	"log/slog"
 )
 
 type MasterPasswordDialog struct {
 	dbPathAndPassword binding.Untyped
 	path              binding.String
-	dialog            dialog.Dialog
+	dialog            *dialog.FormDialog
+	passwordEntry     *widget.Entry
 }
 
 func CreateDialog(path binding.String, parent fyne.Window) MasterPasswordDialog {
@@ -45,6 +47,7 @@ func CreateDialog(path binding.String, parent fyne.Window) MasterPasswordDialog 
 		path:              path,
 		dbPathAndPassword: dbPathAndPassword,
 		dialog:            dialog,
+		passwordEntry:     passwordEntry,
 	}
 
 }
