@@ -1,10 +1,11 @@
 package ui
 
 import (
+	"testing"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/test"
-	"testing"
 )
 
 func TestMainContentAppStarted(t *testing.T) {
@@ -14,5 +15,5 @@ func TestMainContentAppStarted(t *testing.T) {
 	w.SetContent(mainContent.MakeUI())
 	w.Resize(fyne.NewSize(600, 600))
 
-	test.AssertImageMatches(t, "appStarted.png", w.Canvas().Capture())
+	test.AssertImageMatches(t, "mainContent_Show.png", w.Canvas().Capture())
 }
