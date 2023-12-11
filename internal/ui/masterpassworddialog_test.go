@@ -24,7 +24,10 @@ func TestMasterPasswordDialog_Render(t *testing.T) {
 func TestMasterPasswordDialog_fillIn_And_Submit(t *testing.T) {
 	w := test.NewWindow(container.NewWithoutLayout())
 	path := binding.NewString()
-	path.Set("fakeKeypassDBFilePath")
+	err := path.Set("fakeKeypassDBFilePath")
+	if err != nil {
+		t.Error()
+	}
 	masterPasswordDialog := CreateDialog(path, w)
 	w.Resize(fyne.NewSize(600, 600))
 	masterPasswordDialog.ShowDialog()
@@ -54,7 +57,10 @@ func TestMasterPasswordDialog_fillIn_And_Submit(t *testing.T) {
 func TestMasterPasswordDialog_Calls_Listener(t *testing.T) {
 	w := test.NewWindow(container.NewWithoutLayout())
 	path := binding.NewString()
-	path.Set("fakeKeypassDBFilePath")
+	err := path.Set("fakeKeypassDBFilePath")
+	if err != nil {
+		t.Error()
+	}
 	masterPasswordDialog := CreateDialog(path, w)
 	w.Resize(fyne.NewSize(600, 600))
 	masterPasswordDialog.ShowDialog()
