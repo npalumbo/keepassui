@@ -6,12 +6,26 @@ help:  ## Display this help.
 ##@ Tools
 tools: ## Installs required binaries locally
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+	go install fyne.io/fyne/v2/cmd/fyne@latest
+
+install-android-ndk-25:
+	wget -O ~/tools/android-ndk-r25c.zip https://dl.google.com/android/repository/android-ndk-r25c-linux.zip  && unzip ~/tools/android-ndk-r25c.zip -d ~/tools
+
+install-android-cmdline-tools:
+	mkdir ~/tools/android-sdk && wget -O ~/tools/android-cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip && unzip ~/tools/android-cmdline-tools.zip -d ~/tools/android-sdk/
+
+install-android-platform-tools:
+	cd ~/tools/android-sdk && ANDROID_SDK_ROOT=~/tools/android-sdk ~/tools/android-sdk/cmdline-tools/bin/sdkmanager --sdk_root=$$ANDROID_SDK_ROOT "platform-tools"
+
+package-android:
+	ANDROID_NDK_HOME=~/tools/android-ndk-r25c fyne package -os android
+
 
 ##@ Building
 build-multi-arch: ## Builds keepassui go binary for linux and darwin. Outputs to `bin/keepassui-$GOOS-$GOARCH`.
 	@echo "== build-multi-arch"
 	mkdir -p bin/
-	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o bin/keepassui-linux-amd64 ./...
+	GOOS=linux GOARCH=amd64 CGO_ENABL	ED=0 go build -o bin/keepassui-linux-amd64 ./...
 	GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -o bin/keepassui-darwin-amd64 ./...
 	GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 go build -o bin/keepassui-darwin-arm64 ./...
 
@@ -25,12 +39,12 @@ clean: ## Deletes binaries from the bin folder
 	rm -rfv ./bin
 
 ##@ Tests
-test: tools ## Run unit tests
+test: ## Run unit tests
 	@echo "== unit test"
 	go test ./...
 
 ##@ Run static checks
-check: tools ## Runs lint, fmt and vet checks against the codebase
+check: ## Runs lint, fmt and vet checks against the codebase
 	golangci-lint --timeout 60s run
 	go fmt ./...
 	go vet ./...

@@ -10,7 +10,8 @@ import (
 
 func TestMainContentAppStarted(t *testing.T) {
 	w := test.NewWindow(container.NewWithoutLayout())
-	mainContent := CreateMainContent(w)
+	app := test.NewApp()
+	mainContent := CreateMainContent(w, app.Storage())
 
 	w.SetContent(mainContent.MakeUI())
 	w.Resize(fyne.NewSize(600, 600))

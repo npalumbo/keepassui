@@ -1,13 +1,9 @@
 package ui
 
 import (
-	"errors"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/data/binding"
-	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
-	"os"
 )
 
 type MainContent struct {
@@ -24,11 +20,11 @@ func (m *MainContent) MakeUI() fyne.CanvasObject {
 		m.KeyList.listWidget)
 }
 
-func CreateMainContent(parent fyne.Window) MainContent {
+func CreateMainContent(parent fyne.Window, stor fyne.Storage) MainContent {
 	dbFileEntry := CreateDBFileEntry(parent)
-	masterPasswordDialog := CreateDialog(dbFileEntry.PathBinding, parent)
-	keyList := CreatekeyList(masterPasswordDialog.dbPathAndPassword, parent)
-	loadFileButton := CreateLoadDBButton(dbFileEntry.PathBinding, masterPasswordDialog, parent)
+	masterPasswordDialog := CreateDialog(dbFileEntry.PathBinding, dbFileEntry.ContentInBytes, parent)
+	keyList := CreatekeyList(masterPasswordDialog.dbPathAndPassword, masterPasswordDialog.content, parent)
+	loadFileButton := CreateLoadDBButton(masterPasswordDialog)
 	masterPasswordDialog.AddListener(&keyList)
 
 	return MainContent{
@@ -39,24 +35,8 @@ func CreateMainContent(parent fyne.Window) MainContent {
 	}
 }
 
-func CreateLoadDBButton(pathBinding binding.String, masterPasswordDialog MasterPasswordDialog, parent fyne.Window) *widget.Button {
+func CreateLoadDBButton(masterPasswordDialog MasterPasswordDialog) *widget.Button {
 	return widget.NewButton("Load KeePass DB", func() {
-		filePath, err := pathBinding.Get()
-		if err != nil {
-			dialog.ShowError(err, parent)
-		} else if !fileExists(filePath) {
-			dialog.ShowError(errors.New("file does not exist"), parent)
-			return
-		} else {
-			masterPasswordDialog.ShowDialog()
-		}
+		masterPasswordDialog.ShowDialog()
 	})
-}
-
-func fileExists(filename string) bool {
-	info, err := os.Stat(filename)
-	if os.IsNotExist(err) {
-		return false
-	}
-	return !info.IsDir()
 }

@@ -2,16 +2,18 @@ package ui
 
 import (
 	"errors"
+	"keepassui/internal/keepass"
+	"log/slog"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
-	"keepassui/internal/keepass"
-	"log/slog"
 )
 
 type KeyList struct {
 	dbPathAndPassword binding.Untyped
+	content           binding.Bytes
 	elements          binding.StringList
 	listWidget        *widget.List
 	parent            fyne.Window
@@ -25,9 +27,12 @@ func (k *KeyList) DataChanged() {
 	o, err := k.dbPathAndPassword.Get()
 	if err == nil && o != nil {
 		d, ok := o.(Data)
+		contentBytes, errBytes := k.content.Get()
 		if ok {
-			if d.Password != "" {
-				secrets, err := keepass.ReadEntries(d.Path, d.Password)
+			if errBytes != nil {
+				dialog.ShowError(errors.New("Error reading secrets: "+errBytes.Error()), k.parent)
+			} else if d.Password != "" {
+				secrets, err := keepass.ReadEntriesFromContent(contentBytes, d.Password)
 
 				if err != nil {
 					slog.Error("Error reading secret entries", err)
@@ -46,7 +51,7 @@ func (k *KeyList) DataChanged() {
 	k.listWidget.Resize(k.listWidget.Size().AddWidthHeight(0, float32(k.elements.Length()*20)))
 }
 
-func CreatekeyList(dbPathAndPassword binding.Untyped, parent fyne.Window) KeyList {
+func CreatekeyList(dbPathAndPassword binding.Untyped, content binding.Bytes, parent fyne.Window) KeyList {
 	elements := binding.NewStringList()
 	listWidget := widget.NewListWithData(elements,
 		func() fyne.CanvasObject {
@@ -64,6 +69,7 @@ func CreatekeyList(dbPathAndPassword binding.Untyped, parent fyne.Window) KeyLis
 
 	return KeyList{
 		dbPathAndPassword: dbPathAndPassword,
+		content:           content,
 		elements:          elements,
 		listWidget:        listWidget,
 		parent:            parent,

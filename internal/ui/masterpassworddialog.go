@@ -11,20 +11,26 @@ import (
 
 type MasterPasswordDialog struct {
 	dbPathAndPassword binding.Untyped
+	content           binding.Bytes
 	path              binding.String
 	dialog            *dialog.FormDialog
 	passwordEntry     *widget.Entry
 }
 
-func CreateDialog(path binding.String, parent fyne.Window) MasterPasswordDialog {
+func CreateDialog(path binding.String, contentInBytes *[]byte, parent fyne.Window) MasterPasswordDialog {
 	formItems := []*widget.FormItem{}
 	passwordEntry := widget.NewPasswordEntry()
 	passwordEntry.SetPlaceHolder("KeyPass DB password")
 	formItems = append(formItems, widget.NewFormItem("password", passwordEntry))
 	dbPathAndPassword := binding.NewUntyped()
+	content := binding.NewBytes()
 
 	dialog := dialog.NewForm("Enter master password", "Confirm", "Cancel", formItems, func(valid bool) {
 		if valid {
+			err := content.Set(*contentInBytes)
+			if err != nil {
+				slog.Error("Error updating DB bytes", err)
+			}
 			if passwordEntry.Text != "" {
 				path, _ := path.Get()
 				err := dbPathAndPassword.Set(Data{
@@ -33,7 +39,9 @@ func CreateDialog(path binding.String, parent fyne.Window) MasterPasswordDialog 
 				})
 				if err != nil {
 					slog.Error("Error updating Path and Password", err)
+
 				}
+
 			} else {
 				slog.Error("You have to enter a password")
 			}
@@ -46,6 +54,7 @@ func CreateDialog(path binding.String, parent fyne.Window) MasterPasswordDialog 
 	return MasterPasswordDialog{
 		path:              path,
 		dbPathAndPassword: dbPathAndPassword,
+		content:           content,
 		dialog:            dialog,
 		passwordEntry:     passwordEntry,
 	}

@@ -1,8 +1,9 @@
 package keepass
 
 import (
+	"bytes"
+
 	"github.com/tobischo/gokeepasslib/v3"
-	"os"
 )
 
 type SecretEntry struct {
@@ -14,15 +15,12 @@ type SecretEntry struct {
 	Notes    string
 }
 
-func ReadEntries(dbFile, password string) ([]SecretEntry, error) {
-	file, err := os.Open(dbFile)
-	if err != nil {
-		return nil, err
-	}
+func ReadEntriesFromContent(contentInBytes []byte, password string) ([]SecretEntry, error) {
+	file := bytes.NewReader(contentInBytes)
 
 	db := gokeepasslib.NewDatabase()
 	db.Credentials = gokeepasslib.NewPasswordCredentials(password)
-	err = gokeepasslib.NewDecoder(file).Decode(db)
+	err := gokeepasslib.NewDecoder(file).Decode(db)
 
 	if err != nil {
 		return nil, err

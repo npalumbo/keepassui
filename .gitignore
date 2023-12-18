@@ -28,3 +28,5 @@ go.work
 
 # failed test data
 internal/ui/testdata/failed
+KeepassUI.apk
+.vscode/launch.json
