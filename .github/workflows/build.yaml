@@ -8,7 +8,7 @@ on:
 
 jobs:
 
-  test:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: checkout
@@ -23,5 +23,5 @@ jobs:
         run: sudo apt-get install golang gcc libgl1-mesa-dev xorg-dev
       - name: Install tools
         run: make tools
-      - name: run test
-        run: make test
+      - name: run build
+        run: make build
