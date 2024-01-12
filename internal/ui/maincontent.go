@@ -9,28 +9,28 @@ import (
 type MainContent struct {
 	DBFileEntry          DBFileEntry
 	MasterPasswordDialog MasterPasswordDialog
-	KeyList              KeyList
+	KeyAccordion         KeyAccordion
 	LoadDBButton         *widget.Button
 }
 
 func (m *MainContent) MakeUI() fyne.CanvasObject {
-	return container.NewVBox(
+	return container.NewBorder(
 		container.NewVBox(m.DBFileEntry.Container, m.LoadDBButton),
-		widget.NewSeparator(),
-		m.KeyList.listWidget)
+		container.NewVBox(widget.NewSeparator(), m.KeyAccordion.cont), nil, nil, m.KeyAccordion.accordionWidget,
+	)
 }
 
 func CreateMainContent(parent fyne.Window, stor fyne.Storage) MainContent {
 	dbFileEntry := CreateDBFileEntry(parent)
 	masterPasswordDialog := CreateDialog(dbFileEntry.PathBinding, dbFileEntry.ContentInBytes, parent)
-	keyList := CreatekeyList(masterPasswordDialog.dbPathAndPassword, masterPasswordDialog.content, parent)
+	keyTable := CreatekeyAccordion(masterPasswordDialog.dbPathAndPassword, masterPasswordDialog.content, parent)
 	loadFileButton := CreateLoadDBButton(masterPasswordDialog)
-	masterPasswordDialog.AddListener(&keyList)
+	masterPasswordDialog.AddListener(&keyTable)
 
 	return MainContent{
 		DBFileEntry:          dbFileEntry,
 		MasterPasswordDialog: masterPasswordDialog,
-		KeyList:              keyList,
+		KeyAccordion:         keyTable,
 		LoadDBButton:         loadFileButton,
 	}
 }

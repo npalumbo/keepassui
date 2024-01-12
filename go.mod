@@ -3,7 +3,7 @@ module keepassui
 go 1.21
 
 require (
-	fyne.io/fyne/v2 v2.4.0
+	fyne.io/fyne/v2 v2.4.1
 	github.com/tobischo/gokeepasslib/v3 v3.5.1
 )
 
