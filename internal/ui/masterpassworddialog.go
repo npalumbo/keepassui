@@ -17,6 +17,11 @@ type MasterPasswordDialog struct {
 	passwordEntry     *widget.Entry
 }
 
+type DBPathAndPassword struct {
+	Path     string
+	Password string
+}
+
 func CreateDialog(path binding.String, contentInBytes *[]byte, parent fyne.Window) MasterPasswordDialog {
 	formItems := []*widget.FormItem{}
 	passwordEntry := widget.NewPasswordEntry()
@@ -33,7 +38,7 @@ func CreateDialog(path binding.String, contentInBytes *[]byte, parent fyne.Windo
 			}
 			if passwordEntry.Text != "" {
 				path, _ := path.Get()
-				err := dbPathAndPassword.Set(Data{
+				err := dbPathAndPassword.Set(DBPathAndPassword{
 					Path:     path,
 					Password: passwordEntry.Text,
 				})
@@ -63,11 +68,6 @@ func CreateDialog(path binding.String, contentInBytes *[]byte, parent fyne.Windo
 
 func (m MasterPasswordDialog) AddListener(l binding.DataListener) {
 	m.dbPathAndPassword.AddListener(l)
-}
-
-type Data struct {
-	Path     string
-	Password string
 }
 
 func (m MasterPasswordDialog) ShowDialog() {

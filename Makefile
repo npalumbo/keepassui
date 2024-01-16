@@ -7,6 +7,7 @@ help:  ## Display this help.
 tools: ## Installs required binaries locally
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 	go install fyne.io/fyne/v2/cmd/fyne@latest
+	go install go.uber.org/mock/mockgen@latest
 
 install-android-ndk-25:
 	wget -O ~/tools/android-ndk-r25c.zip https://dl.google.com/android/repository/android-ndk-r25c-linux.zip  && unzip ~/tools/android-ndk-r25c.zip -d ~/tools
@@ -45,7 +46,7 @@ test: ## Run unit tests
 
 ##@ Run static checks
 check: ## Runs lint, fmt and vet checks against the codebase
-	golangci-lint --timeout 60s run
+	golangci-lint --timeout 120s run
 	go fmt ./...
 	go vet ./...
 
