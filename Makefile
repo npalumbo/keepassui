@@ -7,6 +7,7 @@ help:  ## Display this help.
 tools: ## Installs required binaries locally
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 	go install fyne.io/fyne/v2/cmd/fyne@latest
+	go install go.uber.org/mock/mockgen@latest
 
 install-android-ndk-25:
 	wget -O ~/tools/android-ndk-r25c.zip https://dl.google.com/android/repository/android-ndk-r25c-linux.zip  && unzip ~/tools/android-ndk-r25c.zip -d ~/tools

@@ -47,7 +47,7 @@ func TestMasterPasswordDialog_fillIn_And_Submit(t *testing.T) {
 	if rawData == nil {
 		t.Error()
 	}
-	data := rawData.(Data)
+	data := rawData.(DBPathAndPassword)
 	if data.Path == "" || data.Path != "fakeKeypassDBFilePath" {
 		t.Error()
 	}
@@ -95,7 +95,7 @@ type fakeListener struct {
 
 func (f *fakeListener) DataChanged() {
 	rawData, _ := f.dbPathAndPassword.Get()
-	data := rawData.(Data)
+	data := rawData.(DBPathAndPassword)
 	if data.Path == "fakeKeypassDBFilePath" && data.Password == "thePassword" {
 		f.dataHasChangedToExpectedValues = true
 	}
