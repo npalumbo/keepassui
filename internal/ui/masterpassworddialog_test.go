@@ -19,7 +19,6 @@ func TestMasterPasswordDialog_Render(t *testing.T) {
 	masterPasswordDialog.ShowDialog()
 
 	test.AssertImageMatches(t, "masterPasswordDialog_Show.png", w.Canvas().Capture())
-
 }
 
 func TestMasterPasswordDialog_fillIn_And_Submit(t *testing.T) {
@@ -85,7 +84,6 @@ func TestMasterPasswordDialog_Calls_Listener(t *testing.T) {
 	if listener.dataHasChangedToExpectedValues == false {
 		t.Error()
 	}
-
 }
 
 type fakeListener struct {
@@ -99,5 +97,4 @@ func (f *fakeListener) DataChanged() {
 	if data.Path == "fakeKeypassDBFilePath" && data.Password == "thePassword" {
 		f.dataHasChangedToExpectedValues = true
 	}
-
 }
