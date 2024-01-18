@@ -17,24 +17,27 @@ type DBFileEntry struct {
 	Container      *fyne.Container
 	PathBinding    binding.String
 	ContentInBytes *[]byte
+	findFileButton *widget.Button
+	fileOpenDialog *dialog.FileDialog
 }
 
 func CreateDBFileEntry(parent fyne.Window) DBFileEntry {
 	var byteContent []byte
 	pathBinding := binding.NewString()
-	findFileButton := widget.NewButtonWithIcon("", theme.SearchIcon(), func() {
-		fileOpen := dialog.NewFileOpen(func(dir fyne.URIReadCloser, err error) {
-			if err == nil && dir != nil {
-				err = pathBinding.Set(dir.URI().Path())
-				if err == nil {
-					byteContent, err = io.ReadAll(dir)
-				}
-				if err != nil {
-					slog.Error("Error setting path: %s", dir.URI().Path(), err)
-				}
+
+	fileOpen := dialog.NewFileOpen(func(dir fyne.URIReadCloser, err error) {
+		if err == nil && dir != nil {
+			err = pathBinding.Set(dir.URI().Path())
+			if err == nil {
+				byteContent, err = io.ReadAll(dir)
 			}
-		}, parent)
-		fileOpen.SetFilter(storage.NewExtensionFileFilter([]string{".kdbx"}))
+			if err != nil {
+				slog.Error("Error setting path: %s", dir.URI().Path(), err)
+			}
+		}
+	}, parent)
+	fileOpen.SetFilter(storage.NewExtensionFileFilter([]string{".kdbx"}))
+	findFileButton := widget.NewButtonWithIcon("", theme.SearchIcon(), func() {
 		fileOpen.Show()
 	})
 
@@ -46,5 +49,7 @@ func CreateDBFileEntry(parent fyne.Window) DBFileEntry {
 		Container:      container.NewBorder(nil, nil, nil, findFileButton, kdbxFilePathEntry),
 		PathBinding:    pathBinding,
 		ContentInBytes: &byteContent,
+		findFileButton: findFileButton,
+		fileOpenDialog: fileOpen,
 	}
 }
