@@ -24,7 +24,7 @@ func TestCreateDBFileEntry(t *testing.T) {
 
 	test.Tap(dbFileEntry.findFileButton)
 
-	URI, err := storage.ParseURI("file://internal/ui/testdata/keepass/")
+	URI, err := storage.ParseURI("file://testdata//files")
 	if err != nil {
 		t.FailNow()
 	}
