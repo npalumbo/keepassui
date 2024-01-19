@@ -25,7 +25,18 @@ type SecretReader interface {
 	ReadEntriesFromContentGroupedByPath() (map[string][]SecretEntry, []string, error)
 }
 
-func (ckdb CipheredKeepassDB) ReadEntriesFromContent() ([]SecretEntry, error) {
+func (ckdb CipheredKeepassDB) ReadEntriesFromContentGroupedByPath() (map[string][]SecretEntry, []string, error) {
+	secrets, err := ckdb.readEntriesFromContent()
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	secretsGroupedByPath, pathsInOrder := groupSecrets(secrets)
+	return secretsGroupedByPath, pathsInOrder, nil
+}
+
+func (ckdb CipheredKeepassDB) readEntriesFromContent() ([]SecretEntry, error) {
 	file := bytes.NewReader(ckdb.ContentInBytes)
 
 	db := gokeepasslib.NewDatabase()
@@ -66,17 +77,6 @@ func (ckdb CipheredKeepassDB) ReadEntriesFromContent() ([]SecretEntry, error) {
 	}
 
 	return secrets, nil
-}
-
-func (ckdb CipheredKeepassDB) ReadEntriesFromContentGroupedByPath() (map[string][]SecretEntry, []string, error) {
-	secrets, err := ckdb.ReadEntriesFromContent()
-
-	if err != nil {
-		return nil, nil, err
-	}
-
-	secretsGroupedByPath, pathsInOrder := groupSecrets(secrets)
-	return secretsGroupedByPath, pathsInOrder, nil
 }
 
 func groupSecrets(secrets []SecretEntry) (secretsGroupedByPath map[string][]SecretEntry, pathsInOrder []string) {
