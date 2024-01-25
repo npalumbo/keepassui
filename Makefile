@@ -30,12 +30,17 @@ install-android-bundletool:
 	@echo 'java -jar ~/tools/bundletools/bundletool-all.jar "$$@"' >> ~/bin/bundletool
 	@chmod +x ~/bin/bundletool
 
-install-all-android-tools: create-android-tools-dir install-android-ndk-25 install-android-cmdline-tools install-android-platform-tools install-android-build-tools install-android-bundletool
 
-package-android:
+##@ Install All Android tools
+install-all-android-tools: create-android-tools-dir install-android-ndk-25 install-android-cmdline-tools install-android-platform-tools install-android-build-tools install-android-bundletool ## Install all the required Android tools
+
+
+##@ Create Android Package (APK file)
+package-android: ## Generates an android APK file
 	ANDROID_NDK_HOME=~/tools/android-ndk-r25c fyne package -os android
 
-release-android:
+##@ Create Android Release (AAB file)
+release-android: ## Generates an android AAB file
 	ANDROID_NDK_HOME=~/tools/android-ndk-r25c ANDROID_HOME=~/tools/android-sdk fyne release -os android -keyStore ~/dev/gplay.keystore -keyName alias
 
 ##@ Building

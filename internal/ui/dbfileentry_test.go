@@ -13,7 +13,7 @@ func TestCreateDBFileEntry(t *testing.T) {
 	mainContainer := container.NewVBox()
 	w := test.NewWindow(mainContainer)
 
-	dbFileEntry := CreateDBFileEntry(w)
+	dbFileEntry := CreateDBFileEntry(nil, w)
 
 	mainContainer.Add(dbFileEntry.Container)
 	w.Resize(fyne.NewSize(600, 600))

@@ -14,9 +14,9 @@ func TestMasterPasswordDialog_Render(t *testing.T) {
 	w := test.NewWindow(container.NewWithoutLayout())
 	path := binding.NewString()
 	contentInBytes := make([]byte, 5)
-	masterPasswordDialog := CreateDialog(path, &contentInBytes, w)
+	masterPasswordDialog := CreateDialog(w)
 	w.Resize(fyne.NewSize(600, 600))
-	masterPasswordDialog.ShowDialog()
+	masterPasswordDialog.ShowDialog(binding.StringToURI(path), &contentInBytes)
 
 	test.AssertImageMatches(t, "masterPasswordDialog_Show.png", w.Canvas().Capture())
 }
@@ -24,14 +24,14 @@ func TestMasterPasswordDialog_Render(t *testing.T) {
 func TestMasterPasswordDialog_fillIn_And_Submit(t *testing.T) {
 	w := test.NewWindow(container.NewWithoutLayout())
 	path := binding.NewString()
-	err := path.Set("fakeKeypassDBFilePath")
+	err := path.Set("file://fakeKeypassDBFilePath")
 	if err != nil {
 		t.Error()
 	}
 	contentInBytes := make([]byte, 5)
-	masterPasswordDialog := CreateDialog(path, &contentInBytes, w)
+	masterPasswordDialog := CreateDialog(w)
 	w.Resize(fyne.NewSize(600, 600))
-	masterPasswordDialog.ShowDialog()
+	masterPasswordDialog.ShowDialog(binding.StringToURI(path), &contentInBytes)
 
 	test.Type(masterPasswordDialog.passwordEntry, "thePassword")
 
@@ -58,14 +58,14 @@ func TestMasterPasswordDialog_fillIn_And_Submit(t *testing.T) {
 func TestMasterPasswordDialog_Calls_Listener(t *testing.T) {
 	w := test.NewWindow(container.NewWithoutLayout())
 	path := binding.NewString()
-	err := path.Set("fakeKeypassDBFilePath")
+	err := path.Set("file://fakeKeypassDBFilePath")
 	if err != nil {
 		t.Error()
 	}
 	contentInBytes := make([]byte, 5)
-	masterPasswordDialog := CreateDialog(path, &contentInBytes, w)
+	masterPasswordDialog := CreateDialog(w)
 	w.Resize(fyne.NewSize(600, 600))
-	masterPasswordDialog.ShowDialog()
+	masterPasswordDialog.ShowDialog(binding.StringToURI(path), &contentInBytes)
 
 	test.Type(masterPasswordDialog.passwordEntry, "thePassword")
 
