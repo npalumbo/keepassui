@@ -12,9 +12,10 @@ import (
 type MasterPasswordDialog struct {
 	dbPathAndPassword binding.Untyped
 	content           binding.Bytes
-	path              binding.String
 	dialog            *dialog.FormDialog
 	passwordEntry     *widget.Entry
+	formItems         []*widget.FormItem
+	parent            fyne.Window
 }
 
 type DBPathAndPassword struct {
@@ -22,7 +23,7 @@ type DBPathAndPassword struct {
 	Password string
 }
 
-func CreateDialog(path binding.String, contentInBytes *[]byte, parent fyne.Window) MasterPasswordDialog {
+func CreateDialog(parent fyne.Window) MasterPasswordDialog {
 	formItems := []*widget.FormItem{}
 	passwordEntry := widget.NewPasswordEntry()
 	passwordEntry.SetPlaceHolder("KeyPass DB password")
@@ -30,18 +31,36 @@ func CreateDialog(path binding.String, contentInBytes *[]byte, parent fyne.Windo
 	dbPathAndPassword := binding.NewUntyped()
 	content := binding.NewBytes()
 
-	dialog := dialog.NewForm("Enter master password", "Confirm", "Cancel", formItems, func(valid bool) {
+	return MasterPasswordDialog{
+		dbPathAndPassword: dbPathAndPassword,
+		content:           content,
+		dialog:            nil,
+		passwordEntry:     passwordEntry,
+		formItems:         formItems,
+		parent:            parent,
+	}
+
+}
+
+func (m *MasterPasswordDialog) AddListener(l binding.DataListener) {
+	m.dbPathAndPassword.AddListener(l)
+}
+
+func (m *MasterPasswordDialog) ShowDialog(path binding.URI, contentInBytes *[]byte) {
+	m.dialog = dialog.NewForm("Enter master password", "Confirm", "Cancel", m.formItems, func(valid bool) {
 		if valid {
-			err := content.Set(*contentInBytes)
+			err := m.content.Set(*contentInBytes)
 			if err != nil {
 				slog.Error("Error updating DB bytes", err)
 			}
-			if passwordEntry.Text != "" {
-				path, _ := path.Get()
-				err := dbPathAndPassword.Set(DBPathAndPassword{
-					Path:     path,
-					Password: passwordEntry.Text,
-				})
+			if m.passwordEntry.Text != "" {
+				pathURI, err := path.Get()
+				if err == nil {
+					err = m.dbPathAndPassword.Set(DBPathAndPassword{
+						Path:     pathURI.Path(),
+						Password: m.passwordEntry.Text,
+					})
+				}
 				if err != nil {
 					slog.Error("Error updating Path and Password", err)
 
@@ -53,23 +72,8 @@ func CreateDialog(path binding.String, contentInBytes *[]byte, parent fyne.Windo
 		} else {
 			slog.Error("invalid password")
 		}
-	}, parent)
-	dialog.Resize(fyne.NewSize(400, 100))
+	}, m.parent)
 
-	return MasterPasswordDialog{
-		path:              path,
-		dbPathAndPassword: dbPathAndPassword,
-		content:           content,
-		dialog:            dialog,
-		passwordEntry:     passwordEntry,
-	}
-
-}
-
-func (m MasterPasswordDialog) AddListener(l binding.DataListener) {
-	m.dbPathAndPassword.AddListener(l)
-}
-
-func (m MasterPasswordDialog) ShowDialog() {
+	m.dialog.Resize(fyne.NewSize(400, 100))
 	m.dialog.Show()
 }

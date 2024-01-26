@@ -15,40 +15,37 @@ import (
 
 type DBFileEntry struct {
 	Container      *fyne.Container
-	PathBinding    binding.String
-	ContentInBytes *[]byte
 	findFileButton *widget.Button
 	fileOpenDialog *dialog.FileDialog
 }
 
-func CreateDBFileEntry(parent fyne.Window) DBFileEntry {
+func CreateDBFileEntry(masterPasswordDialog *MasterPasswordDialog, parent fyne.Window) DBFileEntry {
 	var byteContent []byte
-	pathBinding := binding.NewString()
 
 	fileOpen := dialog.NewFileOpen(func(dir fyne.URIReadCloser, err error) {
 		if err == nil && dir != nil {
-			err = pathBinding.Set(dir.URI().Path())
+
+			fileURI := dir.URI()
+			byteContent, err = io.ReadAll(dir)
 			if err == nil {
-				byteContent, err = io.ReadAll(dir)
+				(*masterPasswordDialog).ShowDialog(binding.BindURI(&fileURI), &byteContent)
 			}
 			if err != nil {
-				slog.Error("Error setting path: %s", dir.URI().Path(), err)
+				slog.Error("Error setting path: %s", fileURI.Path(), err)
+			}
+
+			if err != nil {
+				slog.Error("Error setting path: %s", fileURI.Path(), err)
 			}
 		}
 	}, parent)
 	fileOpen.SetFilter(storage.NewExtensionFileFilter([]string{".kdbx"}))
-	findFileButton := widget.NewButtonWithIcon("", theme.SearchIcon(), func() {
+	findFileButton := widget.NewButtonWithIcon("Load Keepass file", theme.SearchIcon(), func() {
 		fileOpen.Show()
 	})
 
-	kdbxFilePathEntry := widget.NewEntryWithData(pathBinding)
-	kdbxFilePathEntry.Resize(fyne.NewSize(700, kdbxFilePathEntry.Size().Height))
-	kdbxFilePathEntry.PlaceHolder = "Path to db.kdbx"
-
 	return DBFileEntry{
-		Container:      container.NewBorder(nil, nil, nil, findFileButton, kdbxFilePathEntry),
-		PathBinding:    pathBinding,
-		ContentInBytes: &byteContent,
+		Container:      container.NewStack(findFileButton),
 		findFileButton: findFileButton,
 		fileOpenDialog: fileOpen,
 	}
