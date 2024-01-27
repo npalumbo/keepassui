@@ -21,7 +21,7 @@ func TestKeysAccordion_DataChanged_Shows_Error_When_type_not_DBPathAndPassword_d
 	if err != nil {
 		t.Fail()
 	}
-	keyAccordion := CreatekeyAccordion(dbPathAndPassword, nil, nil, w, nil)
+	keyAccordion := CreatekeyAccordion(dbPathAndPassword, nil, w, nil)
 
 	keyAccordion.DataChanged()
 
@@ -30,26 +30,21 @@ func TestKeysAccordion_DataChanged_Shows_Error_When_type_not_DBPathAndPassword_d
 
 func TestKeysAccordion_DataChanged_Shows_Error_Error_Reading_secrets(t *testing.T) {
 	dbPathAndPassword := binding.NewUntyped()
-	content := binding.NewBytes()
 	w := test.NewWindow(container.NewWithoutLayout())
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
 	w.Resize(fyne.NewSize(600, 600))
 
-	err := dbPathAndPassword.Set(DBPathAndPassword{Path: "path", Password: "password"})
-	if err != nil {
-		t.Fail()
-	}
-	err = content.Set(make([]byte, 0))
+	err := dbPathAndPassword.Set(DBPathAndPassword{UriID: "path", Password: "password", ContentInBytes: []byte{}})
 	if err != nil {
 		t.Fail()
 	}
 
 	secretReader := mock_keepass.NewMockSecretReader(mockCtrl)
-	secretReader.EXPECT().ReadEntriesFromContentGroupedByPath().Times(1).Return(nil, nil, errors.New("Fake Error"))
+	secretReader.EXPECT().ReadEntriesFromContentGroupedByPath().Times(1).Return(keepass.SecretsDB{}, errors.New("Fake Error"))
 
-	keyAccordion := CreatekeyAccordion(dbPathAndPassword, content, nil, w, func(contentInBytes []byte, password string) keepass.SecretReader {
+	keyAccordion := CreatekeyAccordion(dbPathAndPassword, nil, w, func(d DBPathAndPassword) keepass.SecretReader {
 		return secretReader
 	})
 
@@ -60,16 +55,11 @@ func TestKeysAccordion_DataChanged_Shows_Error_Error_Reading_secrets(t *testing.
 
 func TestKeysAccordion_DataChanged(t *testing.T) {
 	dbPathAndPassword := binding.NewUntyped()
-	content := binding.NewBytes()
 	w := test.NewWindow(container.NewWithoutLayout())
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	err := dbPathAndPassword.Set(DBPathAndPassword{Path: "path", Password: "password"})
-	if err != nil {
-		t.Fail()
-	}
-	err = content.Set(make([]byte, 0))
+	err := dbPathAndPassword.Set(DBPathAndPassword{UriID: "path", Password: "password", ContentInBytes: []byte{}})
 	if err != nil {
 		t.Fail()
 	}
@@ -79,9 +69,15 @@ func TestKeysAccordion_DataChanged(t *testing.T) {
 	secretsGroupedByPath := make(map[string][]keepass.SecretEntry)
 	secretsGroupedByPath["path 1"] = []keepass.SecretEntry{{Title: "title", Path: "path 1", Username: "username", Password: "password", Url: "url", Notes: "notes"}}
 	paths := []string{"path 1"}
-	secretReader.EXPECT().ReadEntriesFromContentGroupedByPath().Times(1).Return(secretsGroupedByPath, paths, nil)
+	secretReader.EXPECT().ReadEntriesFromContentGroupedByPath().Times(1).Return(
+		keepass.SecretsDB{
+			EntriesByPath: secretsGroupedByPath,
+			PathsInOrder:  paths,
+		},
+		nil,
+	)
 
-	keyAccordion := CreatekeyAccordion(dbPathAndPassword, content, nil, w, func(contentInBytes []byte, password string) keepass.SecretReader {
+	keyAccordion := CreatekeyAccordion(dbPathAndPassword, nil, w, func(d DBPathAndPassword) keepass.SecretReader {
 		return secretReader
 	})
 	w.SetContent(container.NewStack(keyAccordion.accordionWidget))
@@ -94,16 +90,11 @@ func TestKeysAccordion_DataChanged(t *testing.T) {
 
 func TestKeysAccordion_DataChanged_two_groups(t *testing.T) {
 	dbPathAndPassword := binding.NewUntyped()
-	content := binding.NewBytes()
 	w := test.NewWindow(container.NewWithoutLayout())
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	err := dbPathAndPassword.Set(DBPathAndPassword{Path: "path", Password: "password"})
-	if err != nil {
-		t.Fail()
-	}
-	err = content.Set(make([]byte, 0))
+	err := dbPathAndPassword.Set(DBPathAndPassword{UriID: "path", Password: "password", ContentInBytes: []byte{}})
 	if err != nil {
 		t.Fail()
 	}
@@ -117,9 +108,15 @@ func TestKeysAccordion_DataChanged_two_groups(t *testing.T) {
 		{Title: "title 3", Path: "path 2", Username: "username 3", Password: "password 3", Url: "url 3", Notes: "notes 3"},
 	}
 	paths := []string{"path 1", "path 2"}
-	secretReader.EXPECT().ReadEntriesFromContentGroupedByPath().Times(1).Return(secretsGroupedByPath, paths, nil)
+	secretReader.EXPECT().ReadEntriesFromContentGroupedByPath().Times(1).Return(
+		keepass.SecretsDB{
+			EntriesByPath: secretsGroupedByPath,
+			PathsInOrder:  paths,
+		},
+		nil,
+	)
 
-	keyAccordion := CreatekeyAccordion(dbPathAndPassword, content, nil, w, func(contentInBytes []byte, password string) keepass.SecretReader {
+	keyAccordion := CreatekeyAccordion(dbPathAndPassword, nil, w, func(d DBPathAndPassword) keepass.SecretReader {
 		return secretReader
 	})
 	w.SetContent(container.NewStack(keyAccordion.accordionWidget))

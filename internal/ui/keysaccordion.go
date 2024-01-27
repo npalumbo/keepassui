@@ -14,11 +14,10 @@ import (
 
 type KeyAccordion struct {
 	dbPathAndPassword binding.Untyped
-	content           binding.Bytes
 	accordionWidget   *widget.Accordion
 	detailedView      *DetailedView
 	parent            fyne.Window
-	createReader      func(contentInBytes []byte, password string) keepass.SecretReader
+	createReader      func(dbPathAndPassword DBPathAndPassword) keepass.SecretReader
 }
 
 func (k *KeyAccordion) DataChanged() {
@@ -37,23 +36,17 @@ func (k *KeyAccordion) DataChanged() {
 		return
 	}
 
-	contentBytes, errBytes := k.content.Get()
-	if errBytes != nil {
-		dialog.ShowError(errors.New("Error reading secrets: "+errBytes.Error()), k.parent)
-		return
-	}
+	secretReader := k.createReader(d)
 
-	secretReader := k.createReader(contentBytes, d.Password)
-
-	secretsGroupedByPath, pathsInOrder, err := secretReader.ReadEntriesFromContentGroupedByPath()
+	secretsDB, err := secretReader.ReadEntriesFromContentGroupedByPath()
 
 	if err != nil {
 		dialog.ShowError(errors.New("Error reading secrets: "+err.Error()), k.parent)
 		return
 	}
 
-	for _, path := range pathsInOrder {
-		listOfSecretsForPath := secretsGroupedByPath[path]
+	for _, path := range secretsDB.PathsInOrder {
+		listOfSecretsForPath := secretsDB.EntriesByPath[path]
 		newList, err := createList(listOfSecretsForPath, k.detailedView, k.parent)
 
 		if err != nil {
@@ -110,13 +103,10 @@ func createList(listOfSecretsForPath []keepass.SecretEntry, detailedView *Detail
 	return newList, nil
 }
 
-func CreatekeyAccordion(dbPathAndPassword binding.Untyped, content binding.Bytes, detailedView *DetailedView, parent fyne.Window, createReader func(contentInBytes []byte, password string) keepass.SecretReader) KeyAccordion {
-	accordionWidget := widget.NewAccordion()
-
+func CreatekeyAccordion(dbPathAndPassword binding.Untyped, detailedView *DetailedView, parent fyne.Window, createReader ToSecretReaderFn) KeyAccordion {
 	return KeyAccordion{
 		dbPathAndPassword: dbPathAndPassword,
-		content:           content,
-		accordionWidget:   accordionWidget,
+		accordionWidget:   widget.NewAccordion(),
 		detailedView:      detailedView,
 		parent:            parent,
 		createReader:      createReader,
