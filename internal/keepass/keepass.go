@@ -5,12 +5,14 @@ package keepass
 import (
 	"bytes"
 	"slices"
+	"strings"
 
 	"github.com/tobischo/gokeepasslib/v3"
 )
 
 type SecretEntry struct {
-	Path     string
+	Group    string
+	Path     []string
 	Title    string
 	Username string
 	Password string
@@ -63,27 +65,37 @@ func (ckdb CipheredKeepassDB) readEntriesFromContent() ([]SecretEntry, error) {
 	var secrets []SecretEntry
 
 	for _, g := range db.Content.Root.Groups {
-		for _, group := range g.Groups {
-			for _, entry := range group.Entries {
-				outputEntry := SecretEntry{Title: entry.GetTitle(), Password: entry.GetPassword(), Path: group.Name}
-				for _, value := range entry.Values {
-					if value.Key == "UserName" {
-						outputEntry.Username = value.Value.Content
-					}
-					if value.Key == "Notes" {
-						outputEntry.Notes = value.Value.Content
-					}
-					if value.Key == "URL" {
-						outputEntry.Url = value.Value.Content
-					}
-
-				}
-				secrets = append(secrets, outputEntry)
-			}
-		}
+		secrets = extractEntries([]string{}, g, secrets)
 	}
 
 	return secrets, nil
+}
+
+func extractEntries(groupPath []string, groupToScan gokeepasslib.Group, secrets []SecretEntry) []SecretEntry {
+	for _, entry := range groupToScan.Entries {
+		outputEntry := SecretEntry{Title: entry.GetTitle(), Password: entry.GetPassword(), Group: groupToScan.Name}
+		for _, value := range entry.Values {
+			if value.Key == "UserName" {
+				outputEntry.Username = value.Value.Content
+			}
+			if value.Key == "Notes" {
+				outputEntry.Notes = value.Value.Content
+			}
+			if value.Key == "URL" {
+				outputEntry.Url = value.Value.Content
+			}
+
+			outputEntry.Path = append(groupPath, groupToScan.Name)
+			outputEntry.Group = strings.Join(outputEntry.Path, "|")
+
+		}
+		secrets = append(secrets, outputEntry)
+	}
+
+	for _, group := range groupToScan.Groups {
+		secrets = extractEntries(append(groupPath, groupToScan.Name), group, secrets)
+	}
+	return secrets
 }
 
 func groupSecrets(secrets []SecretEntry) SecretsDB {
@@ -91,9 +103,9 @@ func groupSecrets(secrets []SecretEntry) SecretsDB {
 	pathsInOrder := []string{}
 
 	for _, p := range secrets {
-		secretsGroupedByPath[p.Path] = append(secretsGroupedByPath[p.Path], p)
-		if !slices.Contains(pathsInOrder, p.Path) {
-			pathsInOrder = append(pathsInOrder, p.Path)
+		secretsGroupedByPath[p.Group] = append(secretsGroupedByPath[p.Group], p)
+		if !slices.Contains(pathsInOrder, p.Group) {
+			pathsInOrder = append(pathsInOrder, p.Group)
 		}
 	}
 	return SecretsDB{

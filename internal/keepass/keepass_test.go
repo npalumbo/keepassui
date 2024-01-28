@@ -27,39 +27,47 @@ func Test_ReadEntriesFromContentGroupedByPath(t *testing.T) {
 		t.Fatal("We don't expect any errors reading the KeepassDB")
 	}
 
-	assert.Equal(t, 2, len(entriesGroupedByPath))
+	assert.Equal(t, 3, len(entriesGroupedByPath))
 
-	assert.Equal(t, []string{"group 1", "group 2"}, pathsInOrder)
+	assert.Equal(t, []string{"Root", "Root|group 1", "Root|group 2"}, pathsInOrder)
 	keysFromEntriesGroupedByPath := make([]string, 0, len(entriesGroupedByPath))
 	for k := range entriesGroupedByPath {
 		keysFromEntriesGroupedByPath = append(keysFromEntriesGroupedByPath, k)
 	}
 
-	assert.Contains(t, keysFromEntriesGroupedByPath, "group 1")
-	assert.Contains(t, keysFromEntriesGroupedByPath, "group 2")
+	assert.Contains(t, keysFromEntriesGroupedByPath, "Root|group 1")
+	assert.Contains(t, keysFromEntriesGroupedByPath, "Root|group 2")
 
-	entriesForGroup1 := entriesGroupedByPath["group 1"]
-	entriesForGroup2 := entriesGroupedByPath["group 2"]
+	entriesForRoot := entriesGroupedByPath["Root"]
+	entriesForGroup1 := entriesGroupedByPath["Root|group 1"]
+	entriesForGroup2 := entriesGroupedByPath["Root|group 2"]
 
+	assert.Equal(t, 1, len(entriesForRoot))
 	assert.Equal(t, 2, len(entriesForGroup1))
 	assert.Equal(t, 1, len(entriesForGroup2))
 
-	assert.Contains(t, entriesForGroup1, keepass.SecretEntry{
-		Path: "group 1", Title: "entry_inside_group1",
-		Username: "user_in_group1", Password: "password_in_group_1",
-		Url: "https://ingroup1.com/", Notes: "",
+	assert.Contains(t, entriesForRoot, keepass.SecretEntry{
+		Group: "Root", Title: "keepassui example",
+		Username: "keepassui", Password: "keepassui_password",
+		Url: "https://fakekeepassuiurl.com", Notes: "This is an example", Path: []string{"Root"},
 	})
 
 	assert.Contains(t, entriesForGroup1, keepass.SecretEntry{
-		Path: "group 1", Title: "entry_2_in_group_1",
+		Group: "Root|group 1", Title: "entry_inside_group1",
+		Username: "user_in_group1", Password: "password_in_group_1",
+		Url: "https://ingroup1.com/", Notes: "", Path: []string{"Root", "group 1"},
+	})
+
+	assert.Contains(t, entriesForGroup1, keepass.SecretEntry{
+		Group: "Root|group 1", Title: "entry_2_in_group_1",
 		Username: "entry2_group1_username", Password: "entry2_group1_password",
-		Url: "entry2_group1_url", Notes: "",
+		Url: "entry2_group1_url", Notes: "", Path: []string{"Root", "group 1"},
 	})
 
 	assert.Contains(t, entriesForGroup2, keepass.SecretEntry{
-		Path: "group 2", Title: "entry_in_group2",
+		Group: "Root|group 2", Title: "entry_in_group2",
 		Username: "user_in_group2", Password: "password_in_group2",
-		Url: "https://group2.com", Notes: "",
+		Url: "https://group2.com", Notes: "", Path: []string{"Root", "group 2"},
 	})
 }
 
