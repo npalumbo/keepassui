@@ -1,5 +1,7 @@
 package keepass
 
+//go:generate mockgen -destination=../mocks/keepass/mock_keepass.go -source=./keepass.go
+
 import (
 	"bytes"
 	"slices"
@@ -16,28 +18,33 @@ type SecretEntry struct {
 	Notes    string
 }
 
+type SecretsDB struct {
+	EntriesByPath map[string][]SecretEntry
+	PathsInOrder  []string
+}
+
 type CipheredKeepassDB struct {
-	ContentInBytes []byte
-	Password       string
+	DBBytes  []byte
+	Password string
+	UriID    string
 }
 
 type SecretReader interface {
-	ReadEntriesFromContentGroupedByPath() (map[string][]SecretEntry, []string, error)
+	ReadEntriesFromContentGroupedByPath() (SecretsDB, error)
 }
 
-func (ckdb CipheredKeepassDB) ReadEntriesFromContentGroupedByPath() (map[string][]SecretEntry, []string, error) {
+func (ckdb CipheredKeepassDB) ReadEntriesFromContentGroupedByPath() (SecretsDB, error) {
 	secrets, err := ckdb.readEntriesFromContent()
 
 	if err != nil {
-		return nil, nil, err
+		return SecretsDB{}, err
 	}
 
-	secretsGroupedByPath, pathsInOrder := groupSecrets(secrets)
-	return secretsGroupedByPath, pathsInOrder, nil
+	return groupSecrets(secrets), nil
 }
 
 func (ckdb CipheredKeepassDB) readEntriesFromContent() ([]SecretEntry, error) {
-	file := bytes.NewReader(ckdb.ContentInBytes)
+	file := bytes.NewReader(ckdb.DBBytes)
 
 	db := gokeepasslib.NewDatabase()
 	db.Credentials = gokeepasslib.NewPasswordCredentials(ckdb.Password)
@@ -79,9 +86,9 @@ func (ckdb CipheredKeepassDB) readEntriesFromContent() ([]SecretEntry, error) {
 	return secrets, nil
 }
 
-func groupSecrets(secrets []SecretEntry) (secretsGroupedByPath map[string][]SecretEntry, pathsInOrder []string) {
-	secretsGroupedByPath = make(map[string][]SecretEntry)
-	pathsInOrder = []string{}
+func groupSecrets(secrets []SecretEntry) SecretsDB {
+	secretsGroupedByPath := make(map[string][]SecretEntry)
+	pathsInOrder := []string{}
 
 	for _, p := range secrets {
 		secretsGroupedByPath[p.Path] = append(secretsGroupedByPath[p.Path], p)
@@ -89,5 +96,8 @@ func groupSecrets(secrets []SecretEntry) (secretsGroupedByPath map[string][]Secr
 			pathsInOrder = append(pathsInOrder, p.Path)
 		}
 	}
-	return secretsGroupedByPath, pathsInOrder
+	return SecretsDB{
+		EntriesByPath: secretsGroupedByPath,
+		PathsInOrder:  pathsInOrder,
+	}
 }

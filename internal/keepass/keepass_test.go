@@ -16,9 +16,12 @@ func Test_ReadEntriesFromContentGroupedByPath(t *testing.T) {
 		t.Fatal("Could not find test DB")
 	}
 
-	cipheredKeepassDB := keepass.CipheredKeepassDB{ContentInBytes: bytesContent, Password: "keepassui"}
+	cipheredKeepassDB := keepass.CipheredKeepassDB{DBBytes: bytesContent, Password: "keepassui"}
 
-	entriesGroupedByPath, pathsInOrder, err := cipheredKeepassDB.ReadEntriesFromContentGroupedByPath()
+	secretsDB, err := cipheredKeepassDB.ReadEntriesFromContentGroupedByPath()
+
+	entriesGroupedByPath := secretsDB.EntriesByPath
+	pathsInOrder := secretsDB.PathsInOrder
 
 	if err != nil {
 		t.Fatal("We don't expect any errors reading the KeepassDB")
@@ -68,14 +71,14 @@ func Test_ReadEntriesFromContentGroupedByPath_Broken_File(t *testing.T) {
 		t.Fatal("Could not find test DB")
 	}
 
-	cipheredKeepassDB := keepass.CipheredKeepassDB{ContentInBytes: bytesContent, Password: "keepassui"}
+	cipheredKeepassDB := keepass.CipheredKeepassDB{DBBytes: bytesContent, Password: "keepassui"}
 
-	entriesGroupedByPath, pathsInOrder, err := cipheredKeepassDB.ReadEntriesFromContentGroupedByPath()
+	secretsDB, err := cipheredKeepassDB.ReadEntriesFromContentGroupedByPath()
 
 	if err == nil {
 		t.Fatal("We expect an error in this test because the DB file is broken")
 	}
-	if entriesGroupedByPath != nil || pathsInOrder != nil {
+	if secretsDB.EntriesByPath != nil || secretsDB.PathsInOrder != nil {
 		t.Fatal("entriesGroupedByPath and pathsInOrder should be nil")
 	}
 

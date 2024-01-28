@@ -12,32 +12,28 @@ import (
 
 func TestMasterPasswordDialog_Render(t *testing.T) {
 	w := test.NewWindow(container.NewWithoutLayout())
-	path := binding.NewString()
 	contentInBytes := make([]byte, 5)
 	masterPasswordDialog := CreateDialog(w)
 	w.Resize(fyne.NewSize(600, 600))
-	masterPasswordDialog.ShowDialog(binding.StringToURI(path), &contentInBytes)
+
+	masterPasswordDialog.ShowDialog("file://path", &contentInBytes)
 
 	test.AssertImageMatches(t, "masterPasswordDialog_Show.png", w.Canvas().Capture())
 }
 
 func TestMasterPasswordDialog_fillIn_And_Submit(t *testing.T) {
 	w := test.NewWindow(container.NewWithoutLayout())
-	path := binding.NewString()
-	err := path.Set("file://fakeKeypassDBFilePath")
-	if err != nil {
-		t.Error()
-	}
 	contentInBytes := make([]byte, 5)
 	masterPasswordDialog := CreateDialog(w)
 	w.Resize(fyne.NewSize(600, 600))
-	masterPasswordDialog.ShowDialog(binding.StringToURI(path), &contentInBytes)
+
+	masterPasswordDialog.ShowDialog("file://fakeKeypassDBFilePath", &contentInBytes)
 
 	test.Type(masterPasswordDialog.passwordEntry, "thePassword")
 
 	rawData, _ := masterPasswordDialog.dbPathAndPassword.Get()
 	if rawData != nil {
-		t.Error()
+		t.Error("Data from DBPathAndPassword should not be nil")
 	}
 
 	masterPasswordDialog.dialog.Submit()
@@ -47,25 +43,20 @@ func TestMasterPasswordDialog_fillIn_And_Submit(t *testing.T) {
 		t.Error()
 	}
 	data := rawData.(DBPathAndPassword)
-	if data.Path == "" || data.Path != "fakeKeypassDBFilePath" {
-		t.Error()
+	if data.UriID == "" || data.UriID != "file://fakeKeypassDBFilePath" {
+		t.Error("Expecting this URI: file://fakeKeypassDBFilePath")
 	}
 	if data.Password == "" || data.Password != "thePassword" {
-		t.Error()
+		t.Error("Expecting password to be thePassword")
 	}
 }
 
 func TestMasterPasswordDialog_Calls_Listener(t *testing.T) {
 	w := test.NewWindow(container.NewWithoutLayout())
-	path := binding.NewString()
-	err := path.Set("file://fakeKeypassDBFilePath")
-	if err != nil {
-		t.Error()
-	}
 	contentInBytes := make([]byte, 5)
 	masterPasswordDialog := CreateDialog(w)
 	w.Resize(fyne.NewSize(600, 600))
-	masterPasswordDialog.ShowDialog(binding.StringToURI(path), &contentInBytes)
+	masterPasswordDialog.ShowDialog("file://fakeKeypassDBFilePath", &contentInBytes)
 
 	test.Type(masterPasswordDialog.passwordEntry, "thePassword")
 
@@ -94,7 +85,7 @@ type fakeListener struct {
 func (f *fakeListener) DataChanged() {
 	rawData, _ := f.dbPathAndPassword.Get()
 	data := rawData.(DBPathAndPassword)
-	if data.Path == "fakeKeypassDBFilePath" && data.Password == "thePassword" {
+	if data.UriID == "file://fakeKeypassDBFilePath" && data.Password == "thePassword" {
 		f.dataHasChangedToExpectedValues = true
 	}
 }

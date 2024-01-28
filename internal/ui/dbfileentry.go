@@ -6,7 +6,6 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/theme"
@@ -27,13 +26,10 @@ func CreateDBFileEntry(masterPasswordDialog *MasterPasswordDialog, parent fyne.W
 
 			fileURI := dir.URI()
 			byteContent, err = io.ReadAll(dir)
+			defer dir.Close()
 			if err == nil {
-				(*masterPasswordDialog).ShowDialog(binding.BindURI(&fileURI), &byteContent)
+				(*masterPasswordDialog).ShowDialog(fileURI.String(), &byteContent)
 			}
-			if err != nil {
-				slog.Error("Error setting path: %s", fileURI.Path(), err)
-			}
-
 			if err != nil {
 				slog.Error("Error setting path: %s", fileURI.Path(), err)
 			}
