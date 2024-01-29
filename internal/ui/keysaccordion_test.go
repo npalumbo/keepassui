@@ -67,7 +67,7 @@ func TestKeysAccordion_DataChanged(t *testing.T) {
 	secretReader := mock_keepass.NewMockSecretReader(mockCtrl)
 
 	secretsGroupedByPath := make(map[string][]keepass.SecretEntry)
-	secretsGroupedByPath["path 1"] = []keepass.SecretEntry{{Title: "title", Path: "path 1", Username: "username", Password: "password", Url: "url", Notes: "notes"}}
+	secretsGroupedByPath["path 1"] = []keepass.SecretEntry{{Title: "title", Group: "path 1", Username: "username", Password: "password", Url: "url", Notes: "notes"}}
 	paths := []string{"path 1"}
 	secretReader.EXPECT().ReadEntriesFromContentGroupedByPath().Times(1).Return(
 		keepass.SecretsDB{
@@ -102,10 +102,10 @@ func TestKeysAccordion_DataChanged_two_groups(t *testing.T) {
 	secretReader := mock_keepass.NewMockSecretReader(mockCtrl)
 
 	secretsGroupedByPath := make(map[string][]keepass.SecretEntry)
-	secretsGroupedByPath["path 1"] = []keepass.SecretEntry{{Title: "title", Path: "path 1", Username: "username", Password: "password", Url: "url", Notes: "notes"}}
+	secretsGroupedByPath["path 1"] = []keepass.SecretEntry{{Title: "title", Group: "path 1", Username: "username", Password: "password", Url: "url", Notes: "notes"}}
 	secretsGroupedByPath["path 2"] = []keepass.SecretEntry{
-		{Title: "title 2", Path: "path 2", Username: "username 2", Password: "password 2", Url: "url 2", Notes: "notes 2"},
-		{Title: "title 3", Path: "path 2", Username: "username 3", Password: "password 3", Url: "url 3", Notes: "notes 3"},
+		{Title: "title 2", Group: "path 2", Username: "username 2", Password: "password 2", Url: "url 2", Notes: "notes 2"},
+		{Title: "title 3", Group: "path 2", Username: "username 3", Password: "password 3", Url: "url 3", Notes: "notes 3"},
 	}
 	paths := []string{"path 1", "path 2"}
 	secretReader.EXPECT().ReadEntriesFromContentGroupedByPath().Times(1).Return(

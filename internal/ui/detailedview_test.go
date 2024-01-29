@@ -24,7 +24,7 @@ func TestUpdateDetailes_Shown(t *testing.T) {
 
 	secretEntry := keepass.SecretEntry{
 		Title:    "title",
-		Path:     "path",
+		Group:    "path",
 		Username: "username",
 		Password: "password",
 		Url:      "url",
