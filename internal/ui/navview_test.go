@@ -13,7 +13,7 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-func TestKeysAccordion_DataChanged_Shows_Error_When_type_not_DBPathAndPassword_dbPathAndPassword(t *testing.T) {
+func TestNavView_DataChanged_Shows_Error_When_type_not_DBPathAndPassword_dbPathAndPassword(t *testing.T) {
 	dbPathAndPassword := binding.NewUntyped()
 	w := test.NewWindow(container.NewWithoutLayout())
 	w.Resize(fyne.NewSize(600, 600))
@@ -21,14 +21,14 @@ func TestKeysAccordion_DataChanged_Shows_Error_When_type_not_DBPathAndPassword_d
 	if err != nil {
 		t.Fail()
 	}
-	keyAccordion := CreatekeyAccordion(dbPathAndPassword, nil, w, nil)
+	navView := CreateNavView(dbPathAndPassword, nil, w, nil)
 
-	keyAccordion.DataChanged()
+	navView.DataChanged()
 
-	test.AssertImageMatches(t, "keysAccordion_Err_casting_dbPathAndPassword_to_DBPathAndPassword.png", w.Canvas().Capture())
+	test.AssertImageMatches(t, "navView_Err_casting_dbPathAndPassword_to_DBPathAndPassword.png", w.Canvas().Capture())
 }
 
-func TestKeysAccordion_DataChanged_Shows_Error_Error_Reading_secrets(t *testing.T) {
+func TestNavView_DataChanged_Shows_Error_Error_Reading_secrets(t *testing.T) {
 	dbPathAndPassword := binding.NewUntyped()
 	w := test.NewWindow(container.NewWithoutLayout())
 	mockCtrl := gomock.NewController(t)
@@ -44,16 +44,16 @@ func TestKeysAccordion_DataChanged_Shows_Error_Error_Reading_secrets(t *testing.
 	secretReader := mock_keepass.NewMockSecretReader(mockCtrl)
 	secretReader.EXPECT().ReadEntriesFromContentGroupedByPath().Times(1).Return(keepass.SecretsDB{}, errors.New("Fake Error"))
 
-	keyAccordion := CreatekeyAccordion(dbPathAndPassword, nil, w, func(d DBPathAndPassword) keepass.SecretReader {
+	navView := CreateNavView(dbPathAndPassword, nil, w, func(d DBPathAndPassword) keepass.SecretReader {
 		return secretReader
 	})
 
-	keyAccordion.DataChanged()
+	navView.DataChanged()
 
-	test.AssertImageMatches(t, "keysAccordion_Err_Reading_Secrets.png", w.Canvas().Capture())
+	test.AssertImageMatches(t, "navView_Err_Reading_Secrets.png", w.Canvas().Capture())
 }
 
-func TestKeysAccordion_DataChanged(t *testing.T) {
+func TestNavView_DataChanged(t *testing.T) {
 	dbPathAndPassword := binding.NewUntyped()
 	w := test.NewWindow(container.NewWithoutLayout())
 	mockCtrl := gomock.NewController(t)
@@ -77,18 +77,19 @@ func TestKeysAccordion_DataChanged(t *testing.T) {
 		nil,
 	)
 
-	keyAccordion := CreatekeyAccordion(dbPathAndPassword, nil, w, func(d DBPathAndPassword) keepass.SecretReader {
+	navView := CreateNavView(dbPathAndPassword, nil, w, func(d DBPathAndPassword) keepass.SecretReader {
 		return secretReader
 	})
-	w.SetContent(container.NewStack(keyAccordion.accordionWidget))
+
+	w.SetContent(navView.fullContainer)
 	w.Resize(fyne.NewSize(600, 600))
 
-	keyAccordion.DataChanged()
-	keyAccordion.accordionWidget.Open(0)
-	test.AssertImageMatches(t, "keysAccordion_one_group.png", w.Canvas().Capture())
+	navView.DataChanged()
+	navView.fullContainer.Refresh()
+	test.AssertImageMatches(t, "navView_one_group.png", w.Canvas().Capture())
 }
 
-func TestKeysAccordion_DataChanged_two_groups(t *testing.T) {
+func TestNavView_DataChanged_two_groups(t *testing.T) {
 	dbPathAndPassword := binding.NewUntyped()
 	w := test.NewWindow(container.NewWithoutLayout())
 	mockCtrl := gomock.NewController(t)
@@ -102,7 +103,8 @@ func TestKeysAccordion_DataChanged_two_groups(t *testing.T) {
 	secretReader := mock_keepass.NewMockSecretReader(mockCtrl)
 
 	secretsGroupedByPath := make(map[string][]keepass.SecretEntry)
-	secretsGroupedByPath["path 1"] = []keepass.SecretEntry{{Title: "title", Group: "path 1", Username: "username", Password: "password", Url: "url", Notes: "notes"}}
+	secretsGroupedByPath["path 1"] = []keepass.SecretEntry{{Title: "title", Group: "path 1", Username: "username", Password: "password", Url: "url", Notes: "notes"},
+		{Title: "path 2", Group: "path 1", Notes: "", IsGroup: true}}
 	secretsGroupedByPath["path 2"] = []keepass.SecretEntry{
 		{Title: "title 2", Group: "path 2", Username: "username 2", Password: "password 2", Url: "url 2", Notes: "notes 2"},
 		{Title: "title 3", Group: "path 2", Username: "username 3", Password: "password 3", Url: "url 3", Notes: "notes 3"},
@@ -116,13 +118,15 @@ func TestKeysAccordion_DataChanged_two_groups(t *testing.T) {
 		nil,
 	)
 
-	keyAccordion := CreatekeyAccordion(dbPathAndPassword, nil, w, func(d DBPathAndPassword) keepass.SecretReader {
+	navView := CreateNavView(dbPathAndPassword, nil, w, func(d DBPathAndPassword) keepass.SecretReader {
 		return secretReader
 	})
-	w.SetContent(container.NewStack(keyAccordion.accordionWidget))
+	w.SetContent(navView.fullContainer)
 	w.Resize(fyne.NewSize(600, 600))
 
-	keyAccordion.DataChanged()
-	keyAccordion.accordionWidget.Open(1)
-	test.AssertImageMatches(t, "keysAccordion_two_groups.png", w.Canvas().Capture())
+	navView.DataChanged()
+	navView.fullContainer.Refresh()
+	test.AssertImageMatches(t, "navView_two_groups.png", w.Canvas().Capture())
 }
+
+// TODO add test navigating to a nested folder

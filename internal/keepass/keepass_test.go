@@ -42,7 +42,7 @@ func Test_ReadEntriesFromContentGroupedByPath(t *testing.T) {
 	entriesForGroup1 := entriesGroupedByPath["Root|group 1"]
 	entriesForGroup2 := entriesGroupedByPath["Root|group 2"]
 
-	assert.Equal(t, 1, len(entriesForRoot))
+	assert.Equal(t, 3, len(entriesForRoot))
 	assert.Equal(t, 2, len(entriesForGroup1))
 	assert.Equal(t, 1, len(entriesForGroup2))
 
@@ -50,6 +50,16 @@ func Test_ReadEntriesFromContentGroupedByPath(t *testing.T) {
 		Group: "Root", Title: "keepassui example",
 		Username: "keepassui", Password: "keepassui_password",
 		Url: "https://fakekeepassuiurl.com", Notes: "This is an example", Path: []string{"Root"},
+	})
+
+	assert.Contains(t, entriesForRoot, keepass.SecretEntry{
+		Group: "Root", Title: "group 1",
+		Notes: "", Path: []string{"Root"}, IsGroup: true,
+	})
+
+	assert.Contains(t, entriesForRoot, keepass.SecretEntry{
+		Group: "Root", Title: "group 2",
+		Notes: "", Path: []string{"Root"}, IsGroup: true,
 	})
 
 	assert.Contains(t, entriesForGroup1, keepass.SecretEntry{
@@ -122,6 +132,10 @@ func secretsDBForTesting() keepass.SecretsDB {
 			Username: "user_in_root", Password: "password_in_root",
 			Url: "https://rootEntry.com", Notes: "", Path: []string{"Root"},
 		},
+		{
+			Group: "Root", Title: "G1",
+			Notes: "", Path: []string{"Root"}, IsGroup: true,
+		},
 	}
 
 	entriesByPath["Root|G1"] = []keepass.SecretEntry{
@@ -134,6 +148,10 @@ func secretsDBForTesting() keepass.SecretsDB {
 			Group: "Root|G1", Title: "entry_in_RG1_2",
 			Username: "user_in_RG1_2", Password: "password_in_RG1_2",
 			Url: "https://RG1_2.com", Notes: "", Path: []string{"Root", "G1"},
+		},
+		{
+			Group: "Root|G1", Title: "G2",
+			Notes: "", Path: []string{"Root", "G1"}, IsGroup: true,
 		},
 	}
 
