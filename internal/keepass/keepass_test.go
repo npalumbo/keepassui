@@ -92,3 +92,58 @@ func Test_ReadEntriesFromContentGroupedByPath_Broken_File(t *testing.T) {
 
 	assert.EqualError(t, err, "Failed to verify HMAC for block 0")
 }
+
+func Test_writeDBBytes(t *testing.T) {
+	secretsDB := secretsDBForTesting()
+
+	bytes, err := secretsDB.WriteDBBytes("master")
+
+	if err != nil {
+		t.Error("Should not error")
+	}
+
+	cipheredKeepassDB := keepass.CipheredKeepassDB{DBBytes: bytes, Password: "master"}
+
+	secretsDBReadFromNewDBBytes, err := cipheredKeepassDB.ReadEntriesFromContentGroupedByPath()
+
+	if err != nil {
+		t.Error("Should be able to read secrets")
+	}
+
+	assert.Equal(t, secretsDB, secretsDBReadFromNewDBBytes)
+}
+
+func secretsDBForTesting() keepass.SecretsDB {
+	entriesByPath := make(map[string][]keepass.SecretEntry)
+
+	entriesByPath["Root"] = []keepass.SecretEntry{
+		{
+			Group: "Root", Title: "entry_in_Root",
+			Username: "user_in_root", Password: "password_in_root",
+			Url: "https://rootEntry.com", Notes: "", Path: []string{"Root"},
+		},
+	}
+
+	entriesByPath["Root|G1"] = []keepass.SecretEntry{
+		{
+			Group: "Root|G1", Title: "entry_in_RG1",
+			Username: "user_in_RG1", Password: "password_in_RG1",
+			Url: "https://RG1.com", Notes: "", Path: []string{"Root", "G1"},
+		},
+		{
+			Group: "Root|G1", Title: "entry_in_RG1_2",
+			Username: "user_in_RG1_2", Password: "password_in_RG1_2",
+			Url: "https://RG1_2.com", Notes: "", Path: []string{"Root", "G1"},
+		},
+	}
+
+	entriesByPath["Root|G1|G2"] = []keepass.SecretEntry{
+		{
+			Group: "Root|G1|G2", Title: "entry_in_RG2",
+			Username: "user_in_RG2", Password: "password_in_RG2",
+			Url: "https://RG1G2.com", Notes: "", Path: []string{"Root", "G1", "G2"},
+		},
+	}
+
+	return keepass.SecretsDB{PathsInOrder: []string{"Root", "Root|G1", "Root|G1|G2"}, EntriesByPath: entriesByPath}
+}

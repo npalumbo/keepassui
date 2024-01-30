@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/tobischo/gokeepasslib/v3"
+	w "github.com/tobischo/gokeepasslib/v3/wrappers"
 )
 
 type SecretEntry struct {
@@ -46,11 +47,11 @@ func (ckdb CipheredKeepassDB) ReadEntriesFromContentGroupedByPath() (SecretsDB, 
 }
 
 func (ckdb CipheredKeepassDB) readEntriesFromContent() ([]SecretEntry, error) {
-	file := bytes.NewReader(ckdb.DBBytes)
+	reader := bytes.NewReader(ckdb.DBBytes)
 
 	db := gokeepasslib.NewDatabase()
 	db.Credentials = gokeepasslib.NewPasswordCredentials(ckdb.Password)
-	err := gokeepasslib.NewDecoder(file).Decode(db)
+	err := gokeepasslib.NewDecoder(reader).Decode(db)
 
 	if err != nil {
 		return nil, err
@@ -69,6 +70,96 @@ func (ckdb CipheredKeepassDB) readEntriesFromContent() ([]SecretEntry, error) {
 	}
 
 	return secrets, nil
+}
+
+func mkValue(key string, value string) gokeepasslib.ValueData {
+	return gokeepasslib.ValueData{Key: key, Value: gokeepasslib.V{Content: value}}
+}
+
+func mkProtectedValue(key string, value string) gokeepasslib.ValueData {
+	return gokeepasslib.ValueData{
+		Key:   key,
+		Value: gokeepasslib.V{Content: value, Protected: w.NewBoolWrapper(true)},
+	}
+}
+
+func (secretsDB SecretsDB) WriteDBBytes(masterPassword string) ([]byte, error) {
+	rootGroupName := secretsDB.PathsInOrder[0]
+
+	groupsMap := make(map[string]*gokeepasslib.Group)
+
+	for _, path := range secretsDB.PathsInOrder {
+		newGroup := gokeepasslib.NewGroup()
+		entries := secretsDB.EntriesByPath[path]
+		groupName := getLatestGroupInPath(path)
+		if _, ok := groupsMap[groupName]; !ok {
+			for _, secretEntry := range entries {
+				entry := gokeepasslib.NewEntry()
+				entry.Values = append(entry.Values, mkValue("Title", secretEntry.Title))
+				entry.Values = append(entry.Values, mkValue("UserName", secretEntry.Username))
+				entry.Values = append(entry.Values, mkProtectedValue("Password", secretEntry.Password))
+				entry.Values = append(entry.Values, mkValue("URL", secretEntry.Url))
+				entry.Values = append(entry.Values, mkValue("Notes", secretEntry.Notes))
+				newGroup.Entries = append(newGroup.Entries, entry)
+				newGroup.Name = groupName
+			}
+			groupsMap[groupName] = &newGroup
+		}
+	}
+
+	// append groups to group if relevant
+	connectionsMade := []string{}
+
+	pathsInReverseOrder := reverseCopy(secretsDB.PathsInOrder)
+
+	for _, path := range pathsInReverseOrder {
+		if path != rootGroupName {
+			pathHopsInReverseOrder := reverseCopy(strings.Split(path, "|"))
+
+			for i := range pathHopsInReverseOrder {
+				if i > 0 {
+					groupName := pathHopsInReverseOrder[i]
+					subGroupName := pathHopsInReverseOrder[i-1]
+					groupConnection := groupName + "|" + subGroupName
+
+					if !slices.Contains(connectionsMade, groupConnection) {
+
+						mainGroupToAddSubGroup := groupsMap[groupName]
+						subGroup := groupsMap[subGroupName]
+						(*mainGroupToAddSubGroup).Groups = append(mainGroupToAddSubGroup.Groups, *subGroup)
+					}
+					connectionsMade = append(connectionsMade, groupConnection)
+				}
+			}
+		}
+	}
+
+	db := &gokeepasslib.Database{
+		Header:      gokeepasslib.NewHeader(),
+		Credentials: gokeepasslib.NewPasswordCredentials(masterPassword),
+		Content: &gokeepasslib.DBContent{
+			Meta: gokeepasslib.NewMetaData(),
+			Root: &gokeepasslib.RootData{
+				Groups: []gokeepasslib.Group{*groupsMap[rootGroupName]},
+			},
+		},
+	}
+
+	// Lock entries using stream cipher
+	err := db.LockProtectedEntries()
+	if err != nil {
+		return nil, err
+	}
+
+	// and encode it into the file
+	buf := bytes.NewBuffer([]byte{})
+	keepassEncoder := gokeepasslib.NewEncoder(buf)
+
+	if err = keepassEncoder.Encode(db); err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
 }
 
 func extractEntries(groupPath []string, groupToScan gokeepasslib.Group, secrets []SecretEntry) []SecretEntry {
@@ -112,4 +203,22 @@ func groupSecrets(secrets []SecretEntry) SecretsDB {
 		EntriesByPath: secretsGroupedByPath,
 		PathsInOrder:  pathsInOrder,
 	}
+}
+
+func getLatestGroupInPath(path string) string {
+	parts := strings.Split(path, "|")
+
+	if len(parts) > 1 {
+		return parts[len(parts)-1]
+	}
+
+	return path
+}
+
+func reverseCopy(array []string) []string {
+	reversed := make([]string, 0)
+	for i := len(array) - 1; i >= 0; i-- {
+		reversed = append(reversed, array[i])
+	}
+	return reversed
 }
