@@ -10,30 +10,31 @@ import (
 type MainContent struct {
 	DBFileEntry          DBFileEntry
 	MasterPasswordDialog MasterPasswordDialog
-	KeyAccordion         KeyAccordion
+	NavView              NavView
 	detailedView         DetailedView
 }
 
 type ToSecretReaderFn func(d DBPathAndPassword) keepass.SecretReader
 
 func (m *MainContent) MakeUI() fyne.CanvasObject {
-	return container.NewBorder(
-		container.NewVBox(m.DBFileEntry.Container),
-		m.detailedView.container, nil, nil, m.KeyAccordion.accordionWidget,
+	border := container.NewBorder(nil,
+		m.NavView.detailedView.container, nil, nil, m.NavView.fullContainer,
 	)
+	return container.NewBorder(m.DBFileEntry.Container, nil, nil, nil, border)
+
 }
 
 func CreateMainContent(parent fyne.Window, stor fyne.Storage) MainContent {
 	masterPasswordDialog := CreateDialog(parent)
 	dbFileEntry := CreateDBFileEntry(&masterPasswordDialog, parent)
 	detailedView := CreateDetailedView()
-	keyAccordion := CreatekeyAccordion(masterPasswordDialog.dbPathAndPassword, detailedView, parent, CreateKeepassSecretReaderFromDBPathAndPassword)
-	masterPasswordDialog.AddListener(&keyAccordion)
+	navView := CreateNavView(masterPasswordDialog.dbPathAndPassword, detailedView, parent, CreateKeepassSecretReaderFromDBPathAndPassword)
+	masterPasswordDialog.AddListener(&navView)
 
 	return MainContent{
 		DBFileEntry:          dbFileEntry,
 		MasterPasswordDialog: masterPasswordDialog,
-		KeyAccordion:         keyAccordion,
+		NavView:              navView,
 		detailedView:         *detailedView,
 	}
 }

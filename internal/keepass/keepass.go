@@ -19,6 +19,7 @@ type SecretEntry struct {
 	Password string
 	Url      string
 	Notes    string
+	IsGroup  bool
 }
 
 type SecretsDB struct {
@@ -94,14 +95,16 @@ func (secretsDB SecretsDB) WriteDBBytes(masterPassword string) ([]byte, error) {
 		groupName := getLatestGroupInPath(path)
 		if _, ok := groupsMap[groupName]; !ok {
 			for _, secretEntry := range entries {
-				entry := gokeepasslib.NewEntry()
-				entry.Values = append(entry.Values, mkValue("Title", secretEntry.Title))
-				entry.Values = append(entry.Values, mkValue("UserName", secretEntry.Username))
-				entry.Values = append(entry.Values, mkProtectedValue("Password", secretEntry.Password))
-				entry.Values = append(entry.Values, mkValue("URL", secretEntry.Url))
-				entry.Values = append(entry.Values, mkValue("Notes", secretEntry.Notes))
-				newGroup.Entries = append(newGroup.Entries, entry)
-				newGroup.Name = groupName
+				if !secretEntry.IsGroup {
+					entry := gokeepasslib.NewEntry()
+					entry.Values = append(entry.Values, mkValue("Title", secretEntry.Title))
+					entry.Values = append(entry.Values, mkValue("UserName", secretEntry.Username))
+					entry.Values = append(entry.Values, mkProtectedValue("Password", secretEntry.Password))
+					entry.Values = append(entry.Values, mkValue("URL", secretEntry.Url))
+					entry.Values = append(entry.Values, mkValue("Notes", secretEntry.Notes))
+					newGroup.Entries = append(newGroup.Entries, entry)
+					newGroup.Name = groupName
+				}
 			}
 			groupsMap[groupName] = &newGroup
 		}
@@ -184,7 +187,9 @@ func extractEntries(groupPath []string, groupToScan gokeepasslib.Group, secrets 
 	}
 
 	for _, group := range groupToScan.Groups {
-		secrets = extractEntries(append(groupPath, groupToScan.Name), group, secrets)
+		expandedPath := append(groupPath, groupToScan.Name)
+		secrets = extractEntries(expandedPath, group, secrets)
+		secrets = append(secrets, SecretEntry{Title: group.Name, Path: expandedPath, Group: strings.Join(expandedPath, "|"), IsGroup: true})
 	}
 	return secrets
 }
