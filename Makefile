@@ -67,7 +67,7 @@ test: ## Run unit tests
 
 ##@ Run static checks
 check: ## Runs lint, fmt and vet checks against the codebase
-	golangci-lint --timeout 120s run
+	golangci-lint --timeout 180s run
 	go fmt ./...
 	go vet ./...
 
