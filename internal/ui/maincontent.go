@@ -25,10 +25,11 @@ func (m *MainContent) MakeUI() fyne.CanvasObject {
 }
 
 func CreateMainContent(parent fyne.Window, stor fyne.Storage) MainContent {
-	masterPasswordDialog := CreateDialog(parent)
+	dbPathAndPassword := &DBPathAndPassword{}
+	masterPasswordDialog := CreateDialog(dbPathAndPassword, parent)
 	dbFileEntry := CreateDBFileEntry(&masterPasswordDialog, parent)
 	detailedView := CreateDetailedView()
-	navView := CreateNavView(masterPasswordDialog.dbPathAndPassword, detailedView, parent, CreateKeepassSecretReaderFromDBPathAndPassword)
+	navView := CreateNavView(dbPathAndPassword, detailedView, parent, CreateKeepassSecretReaderFromDBPathAndPassword)
 	masterPasswordDialog.AddListener(&navView)
 
 	return MainContent{

@@ -6,14 +6,13 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/test"
 )
 
 func TestMasterPasswordDialog_Render(t *testing.T) {
 	w := test.NewWindow(container.NewWithoutLayout())
 	contentInBytes := make([]byte, 5)
-	masterPasswordDialog := CreateDialog(w)
+	masterPasswordDialog := CreateDialog(&DBPathAndPassword{}, w)
 	w.Resize(fyne.NewSize(600, 600))
 
 	masterPasswordDialog.ShowDialog("file://path", &contentInBytes)
@@ -24,25 +23,25 @@ func TestMasterPasswordDialog_Render(t *testing.T) {
 func TestMasterPasswordDialog_fillIn_And_Submit(t *testing.T) {
 	w := test.NewWindow(container.NewWithoutLayout())
 	contentInBytes := make([]byte, 5)
-	masterPasswordDialog := CreateDialog(w)
+	dbPathAndPassword := &DBPathAndPassword{}
+	masterPasswordDialog := CreateDialog(dbPathAndPassword, w)
 	w.Resize(fyne.NewSize(600, 600))
 
 	masterPasswordDialog.ShowDialog("file://fakeKeypassDBFilePath", &contentInBytes)
 
 	test.Type(masterPasswordDialog.passwordEntry, "thePassword")
 
-	rawData, _ := masterPasswordDialog.dbPathAndPassword.Get()
-	if rawData != nil {
-		t.Error("Data from DBPathAndPassword should not be nil")
+	if masterPasswordDialog.dbPathAndPassword.UriID != "" {
+		t.Error("UriID from DBPathAndPassword should be empty string on start")
 	}
 
 	masterPasswordDialog.dialog.Submit()
 
-	rawData, _ = masterPasswordDialog.dbPathAndPassword.Get()
-	if rawData == nil {
-		t.Error()
+	if masterPasswordDialog.dbPathAndPassword.UriID == "" {
+		t.Error("UriID from DBPathAndPassword should not be empty string after submit")
 	}
-	data := rawData.(DBPathAndPassword)
+
+	data := *masterPasswordDialog.dbPathAndPassword
 	if data.UriID == "" || data.UriID != "file://fakeKeypassDBFilePath" {
 		t.Error("Expecting this URI: file://fakeKeypassDBFilePath")
 	}
@@ -54,7 +53,8 @@ func TestMasterPasswordDialog_fillIn_And_Submit(t *testing.T) {
 func TestMasterPasswordDialog_Calls_Listener(t *testing.T) {
 	w := test.NewWindow(container.NewWithoutLayout())
 	contentInBytes := make([]byte, 5)
-	masterPasswordDialog := CreateDialog(w)
+	dbPathAndPassword := &DBPathAndPassword{}
+	masterPasswordDialog := CreateDialog(dbPathAndPassword, w)
 	w.Resize(fyne.NewSize(600, 600))
 	masterPasswordDialog.ShowDialog("file://fakeKeypassDBFilePath", &contentInBytes)
 
@@ -79,12 +79,11 @@ func TestMasterPasswordDialog_Calls_Listener(t *testing.T) {
 
 type fakeListener struct {
 	dataHasChangedToExpectedValues bool
-	dbPathAndPassword              binding.Untyped
+	dbPathAndPassword              *DBPathAndPassword
 }
 
 func (f *fakeListener) DataChanged() {
-	rawData, _ := f.dbPathAndPassword.Get()
-	data := rawData.(DBPathAndPassword)
+	data := *f.dbPathAndPassword
 	if data.UriID == "file://fakeKeypassDBFilePath" && data.Password == "thePassword" {
 		f.dataHasChangedToExpectedValues = true
 	}
