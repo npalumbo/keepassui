@@ -8,38 +8,30 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/test"
 	"go.uber.org/mock/gomock"
 )
 
-func TestNavView_DataChanged_Shows_Error_When_type_not_DBPathAndPassword_dbPathAndPassword(t *testing.T) {
-	dbPathAndPassword := binding.NewUntyped()
+func TestNavView_DataChanged_Does_Nothing_When_DBPathAndPassword_is_EmptyObject(t *testing.T) {
+	dbPathAndPassword := &DBPathAndPassword{}
 	w := test.NewWindow(container.NewWithoutLayout())
 	w.Resize(fyne.NewSize(600, 600))
-	err := dbPathAndPassword.Set("fake string not DBPathAndPassword")
-	if err != nil {
-		t.Fail()
-	}
+
 	navView := CreateNavView(dbPathAndPassword, nil, w, nil)
 
 	navView.DataChanged()
 
-	test.AssertImageMatches(t, "navView_Err_casting_dbPathAndPassword_to_DBPathAndPassword.png", w.Canvas().Capture())
+	test.AssertImageMatches(t, "navView_Err_Does_Nothing_When_DBPathAndPassword_is_EmptyObject.png", w.Canvas().Capture())
 }
 
 func TestNavView_DataChanged_Shows_Error_Error_Reading_secrets(t *testing.T) {
-	dbPathAndPassword := binding.NewUntyped()
 	w := test.NewWindow(container.NewWithoutLayout())
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
 	w.Resize(fyne.NewSize(600, 600))
 
-	err := dbPathAndPassword.Set(DBPathAndPassword{UriID: "path", Password: "password", ContentInBytes: []byte{}})
-	if err != nil {
-		t.Fail()
-	}
+	dbPathAndPassword := &DBPathAndPassword{UriID: "path", Password: "password", ContentInBytes: []byte{}}
 
 	secretReader := mock_keepass.NewMockSecretReader(mockCtrl)
 	secretReader.EXPECT().ReadEntriesFromContentGroupedByPath().Times(1).Return(keepass.SecretsDB{}, errors.New("Fake Error"))
@@ -54,15 +46,11 @@ func TestNavView_DataChanged_Shows_Error_Error_Reading_secrets(t *testing.T) {
 }
 
 func TestNavView_DataChanged(t *testing.T) {
-	dbPathAndPassword := binding.NewUntyped()
 	w := test.NewWindow(container.NewWithoutLayout())
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	err := dbPathAndPassword.Set(DBPathAndPassword{UriID: "path", Password: "password", ContentInBytes: []byte{}})
-	if err != nil {
-		t.Fail()
-	}
+	dbPathAndPassword := &DBPathAndPassword{UriID: "path", Password: "password", ContentInBytes: []byte{}}
 
 	secretReader := mock_keepass.NewMockSecretReader(mockCtrl)
 
@@ -90,15 +78,11 @@ func TestNavView_DataChanged(t *testing.T) {
 }
 
 func TestNavView_DataChanged_two_groups(t *testing.T) {
-	dbPathAndPassword := binding.NewUntyped()
 	w := test.NewWindow(container.NewWithoutLayout())
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	err := dbPathAndPassword.Set(DBPathAndPassword{UriID: "path", Password: "password", ContentInBytes: []byte{}})
-	if err != nil {
-		t.Fail()
-	}
+	dbPathAndPassword := &DBPathAndPassword{UriID: "path", Password: "password", ContentInBytes: []byte{}}
 
 	secretReader := mock_keepass.NewMockSecretReader(mockCtrl)
 

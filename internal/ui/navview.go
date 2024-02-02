@@ -19,29 +19,18 @@ type NavView struct {
 	listPanel         *fyne.Container
 	detailedView      *DetailedView
 	parent            fyne.Window
-	dbPathAndPassword binding.Untyped
+	dbPathAndPassword *DBPathAndPassword
 	createReader      ToSecretReaderFn
 	currentPath       string
 	secretsDB         keepass.SecretsDB
 }
 
 func (n *NavView) DataChanged() {
-	o, err := n.dbPathAndPassword.Get()
-	if err != nil {
-		dialog.ShowError(err, n.parent)
-		return
-	}
-	if o == nil {
+	if n.dbPathAndPassword.UriID == "" {
 		return
 	}
 
-	d, ok := o.(DBPathAndPassword)
-	if !ok {
-		dialog.ShowError(errors.New("Could not cast dbPathAndPassword to DBPathAndPassword"), n.parent)
-		return
-	}
-
-	secretReader := n.createReader(d)
+	secretReader := n.createReader(*n.dbPathAndPassword)
 
 	secretsDB, err := secretReader.ReadEntriesFromContentGroupedByPath()
 
@@ -157,7 +146,7 @@ func createListNav(listOfSecretsForPath []keepass.SecretEntry, detailedView *Det
 	return newList, nil
 }
 
-func CreateNavView(dbPathAndPassword binding.Untyped, detailedView *DetailedView, parent fyne.Window, createReader ToSecretReaderFn) NavView {
+func CreateNavView(dbPathAndPassword *DBPathAndPassword, detailedView *DetailedView, parent fyne.Window, createReader ToSecretReaderFn) NavView {
 
 	breadCrumbs := container.NewHBox()
 	listPanel := container.NewStack()
