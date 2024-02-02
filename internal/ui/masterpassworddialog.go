@@ -52,6 +52,7 @@ func (m *MasterPasswordDialog) ShowDialog(uriID string, contentInBytes *[]byte) 
 			m.dbPathAndPassword.ContentInBytes = *contentInBytes
 			m.dbPathAndPassword.UriID = uriID
 			m.dbPathAndPassword.Password = m.passwordEntry.Text
+			m.passwordEntry.Text = ""
 			err := m.notify.Set(uniuri.New())
 			if err != nil {
 				slog.Error("Error notifying changes to listener", err)
