@@ -50,6 +50,27 @@ func TestMasterPasswordDialog_fillIn_And_Submit(t *testing.T) {
 	}
 }
 
+func TestMasterPasswordDialog_Should_Not_Show_A_Previously_Entered_Password(t *testing.T) {
+	w := test.NewWindow(container.NewWithoutLayout())
+	contentInBytes := make([]byte, 5)
+	dbPathAndPassword := &DBPathAndPassword{}
+	masterPasswordDialog := CreateDialog(dbPathAndPassword, w)
+	w.Resize(fyne.NewSize(600, 600))
+
+	masterPasswordDialog.ShowDialog("file://fakeKeypassDBFilePath", &contentInBytes)
+
+	test.AssertImageMatches(t, "masterPasswordDialog_Show.png", w.Canvas().Capture())
+
+	test.Type(masterPasswordDialog.passwordEntry, "thePassword")
+
+	masterPasswordDialog.dialog.Submit()
+
+	// Second time ShowDialog is called it should not have the previous password
+	masterPasswordDialog.ShowDialog("file://fakeKeypassDBFilePath", &contentInBytes)
+
+	test.AssertImageMatches(t, "masterPasswordDialog_Show_Second_Time.png", w.Canvas().Capture())
+}
+
 func TestMasterPasswordDialog_Calls_Listener(t *testing.T) {
 	w := test.NewWindow(container.NewWithoutLayout())
 	contentInBytes := make([]byte, 5)
