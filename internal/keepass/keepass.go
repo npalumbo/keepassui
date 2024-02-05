@@ -84,6 +84,55 @@ func mkProtectedValue(key string, value string) gokeepasslib.ValueData {
 	}
 }
 
+func (secretsDB *SecretsDB) AddSecretEntry(secretEntry SecretEntry) {
+	entriesByPath, ok := secretsDB.EntriesByPath[secretEntry.Group]
+	if !ok {
+		entriesByPath = []SecretEntry{}
+		secretsDB.PathsInOrder = append(secretsDB.PathsInOrder, secretEntry.Group)
+	}
+	idx := slices.IndexFunc(entriesByPath, func(s SecretEntry) bool { return s.Title == secretEntry.Title })
+	if idx == -1 {
+		entriesByPath = append(entriesByPath, secretEntry)
+	} else {
+		entriesByPath[idx] = secretEntry
+	}
+	secretsDB.EntriesByPath[secretEntry.Group] = entriesByPath
+}
+
+func (secretsDB *SecretsDB) DeleteSecretEntry(secretEntry SecretEntry) bool {
+	entriesByPath, ok := secretsDB.EntriesByPath[secretEntry.Group]
+	if !ok {
+		return false
+	}
+	idx := slices.IndexFunc(entriesByPath, func(s SecretEntry) bool { return s.Title == secretEntry.Title })
+
+	if idx == -1 {
+		return false
+	}
+
+	entriesByPathExcludingIdx := append(entriesByPath[:idx], entriesByPath[idx+1:]...)
+	secretsDB.EntriesByPath[secretEntry.Group] = entriesByPathExcludingIdx
+
+	if secretEntry.IsGroup {
+		// if it's a group we need to delete the map all the entries for the path that the groups define and the entry in paths in order
+
+		expandedPath := append(secretEntry.Path, secretEntry.Title)
+		expandedPathInString := strings.Join(expandedPath, "|")
+
+		delete(secretsDB.EntriesByPath, expandedPathInString)
+
+		pathsInOrder := secretsDB.PathsInOrder
+
+		idxPath := slices.IndexFunc(pathsInOrder, func(s string) bool { return s == expandedPathInString })
+
+		pathsInOrderExcludingIdxPath := append(pathsInOrder[:idxPath], pathsInOrder[idxPath+1:]...)
+
+		secretsDB.PathsInOrder = pathsInOrderExcludingIdxPath
+	}
+
+	return true
+}
+
 func (secretsDB SecretsDB) WriteDBBytes(masterPassword string) ([]byte, error) {
 	rootGroupName := secretsDB.PathsInOrder[0]
 
