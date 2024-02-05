@@ -291,7 +291,7 @@ func TestDeleteSecretEntry_ShouldDeleteGroupAndItsContents(t *testing.T) {
 	assert.Equal(t, "entry_in_RG1", entriesForRootG1[0].Title)
 	assert.Equal(t, "entry_in_RG1_2", entriesForRootG1[1].Title)
 
-	entriesForRootG1G2, ok = secretsDB.EntriesByPath["Root|G1|G2"]
+	_, ok = secretsDB.EntriesByPath["Root|G1|G2"]
 
 	assert.False(t, ok, "G2 should not have entries")
 }
