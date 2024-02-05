@@ -85,7 +85,8 @@ func createListNav(listOfSecretsForPath []keepass.SecretEntry, detailedView *Det
 			copyButton := widget.NewButtonWithIcon("copy", theme.ContentCopyIcon(), func() {})
 			showInfoButton := widget.NewButtonWithIcon("details", theme.InfoIcon(), func() {})
 			openGroupButton := widget.NewButtonWithIcon("open", theme.FolderOpenIcon(), func() {})
-			buttons := container.NewHBox(copyButton, showInfoButton, openGroupButton)
+			deleteButton := widget.NewButtonWithIcon("delete", theme.DeleteIcon(), func() {})
+			buttons := container.NewHBox(copyButton, showInfoButton, openGroupButton, deleteButton)
 			templateLabel := widget.NewLabel("template")
 			iconAndLabel := container.NewHBox(widget.NewIcon(theme.FolderIcon()), templateLabel)
 			container := container.NewBorder(nil, nil, iconAndLabel, buttons, nil)
@@ -113,6 +114,14 @@ func createListNav(listOfSecretsForPath []keepass.SecretEntry, detailedView *Det
 			copyPasswordButton := buttons.Objects[0].(*widget.Button)
 			showInfoButton := buttons.Objects[1].(*widget.Button)
 			openGroupButton := buttons.Objects[2].(*widget.Button)
+			deleteButton := buttons.Objects[3].(*widget.Button)
+			deleteButton.OnTapped = func() {
+				deleted := navView.secretsDB.DeleteSecretEntry(secret)
+				if deleted {
+					navView.UpdateNavView(secret.Group)
+				}
+			}
+
 			if secret.IsGroup {
 				icon.SetResource(theme.FolderIcon())
 				label.SetText(secret.Title)

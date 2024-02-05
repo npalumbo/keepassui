@@ -54,14 +54,8 @@ func TestNavView_DataChanged(t *testing.T) {
 
 	secretReader := mock_keepass.NewMockSecretReader(mockCtrl)
 
-	secretsGroupedByPath := make(map[string][]keepass.SecretEntry)
-	secretsGroupedByPath["path 1"] = []keepass.SecretEntry{{Title: "title", Group: "path 1", Username: "username", Password: "password", Url: "url", Notes: "notes"}}
-	paths := []string{"path 1"}
 	secretReader.EXPECT().ReadEntriesFromContentGroupedByPath().Times(1).Return(
-		keepass.SecretsDB{
-			EntriesByPath: secretsGroupedByPath,
-			PathsInOrder:  paths,
-		},
+		secretsDBForTesting(),
 		nil,
 	)
 
@@ -86,19 +80,8 @@ func TestNavView_DataChanged_two_groups(t *testing.T) {
 
 	secretReader := mock_keepass.NewMockSecretReader(mockCtrl)
 
-	secretsGroupedByPath := make(map[string][]keepass.SecretEntry)
-	secretsGroupedByPath["path 1"] = []keepass.SecretEntry{{Title: "title", Group: "path 1", Username: "username", Password: "password", Url: "url", Notes: "notes"},
-		{Title: "path 2", Group: "path 1", Notes: "", IsGroup: true}}
-	secretsGroupedByPath["path 2"] = []keepass.SecretEntry{
-		{Title: "title 2", Group: "path 2", Username: "username 2", Password: "password 2", Url: "url 2", Notes: "notes 2"},
-		{Title: "title 3", Group: "path 2", Username: "username 3", Password: "password 3", Url: "url 3", Notes: "notes 3"},
-	}
-	paths := []string{"path 1", "path 2"}
 	secretReader.EXPECT().ReadEntriesFromContentGroupedByPath().Times(1).Return(
-		keepass.SecretsDB{
-			EntriesByPath: secretsGroupedByPath,
-			PathsInOrder:  paths,
-		},
+		secretsDBWithTwoGroups(),
 		nil,
 	)
 
@@ -113,4 +96,96 @@ func TestNavView_DataChanged_two_groups(t *testing.T) {
 	test.AssertImageMatches(t, "navView_two_groups.png", w.Canvas().Capture())
 }
 
-// TODO add test navigating to a nested folder
+func TestNavView_NavigateToNestedFolder(t *testing.T) {
+	w := test.NewWindow(container.NewWithoutLayout())
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	dbPathAndPassword := &DBPathAndPassword{UriID: "path", Password: "password", ContentInBytes: []byte{}}
+
+	secretReader := mock_keepass.NewMockSecretReader(mockCtrl)
+
+	secretReader.EXPECT().ReadEntriesFromContentGroupedByPath().Times(1).Return(
+		secretsDBWithTwoGroups(),
+		nil,
+	)
+
+	navView := CreateNavView(dbPathAndPassword, nil, w, func(d DBPathAndPassword) keepass.SecretReader {
+		return secretReader
+	})
+	w.SetContent(navView.fullContainer)
+	w.Resize(fyne.NewSize(600, 600))
+
+	navView.DataChanged()
+	navView.fullContainer.Refresh()
+
+	test.AssertImageMatches(t, "navView_two_groups.png", w.Canvas().Capture())
+
+	// Ideally we would simulate a click from the UI but I struggle to find the right open button from the list
+	navView.UpdateNavView("path 2")
+
+	test.AssertImageMatches(t, "navView_two_groups_nested_group.png", w.Canvas().Capture())
+}
+
+func TestNavView_DeleteFirstEntry(t *testing.T) {
+	w := test.NewWindow(container.NewWithoutLayout())
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	dbPathAndPassword := &DBPathAndPassword{UriID: "path", Password: "password", ContentInBytes: []byte{}}
+
+	secretReader := mock_keepass.NewMockSecretReader(mockCtrl)
+
+	secretsDBWithTwoGroups := secretsDBWithTwoGroups()
+	secretReader.EXPECT().ReadEntriesFromContentGroupedByPath().Times(1).Return(
+		secretsDBWithTwoGroups,
+		nil,
+	)
+
+	navView := CreateNavView(dbPathAndPassword, nil, w, func(d DBPathAndPassword) keepass.SecretReader {
+		return secretReader
+	})
+	w.SetContent(navView.fullContainer)
+	w.Resize(fyne.NewSize(600, 600))
+
+	navView.DataChanged()
+	navView.fullContainer.Refresh()
+
+	test.AssertImageMatches(t, "navView_two_groups.png", w.Canvas().Capture())
+
+	// Ideally we would simulate a click from the UI but I struggle to find the right open button from the list
+	secretsDBWithTwoGroups.DeleteSecretEntry(keepass.SecretEntry{
+		Title: "title 2", Group: "path 2", Username: "username 2",
+		Password: "password 2", Url: "url 2", Notes: "notes 2"})
+
+	navView.UpdateNavView("path 2")
+
+	test.AssertImageMatches(t, "navView_two_groups_nested_group_with_one_entry_deleted.png", w.Canvas().Capture())
+}
+
+func secretsDBForTesting() keepass.SecretsDB {
+	secretsGroupedByPath := make(map[string][]keepass.SecretEntry)
+	secretsGroupedByPath["path 1"] = []keepass.SecretEntry{{Title: "title", Group: "path 1", Username: "username", Password: "password", Url: "url", Notes: "notes"}}
+	paths := []string{"path 1"}
+	secretsDB := keepass.SecretsDB{
+		EntriesByPath: secretsGroupedByPath,
+		PathsInOrder:  paths,
+	}
+	return secretsDB
+}
+
+func secretsDBWithTwoGroups() keepass.SecretsDB {
+	secretsGroupedByPath := make(map[string][]keepass.SecretEntry)
+	secretsGroupedByPath["path 1"] = []keepass.SecretEntry{{Title: "title", Group: "path 1", Username: "username", Password: "password", Url: "url", Notes: "notes"},
+		{Title: "path 2", Group: "path 1", Notes: "", IsGroup: true}}
+	secretsGroupedByPath["path 2"] = []keepass.SecretEntry{
+		{Title: "title 2", Group: "path 2", Username: "username 2", Password: "password 2", Url: "url 2", Notes: "notes 2"},
+		{Title: "title 3", Group: "path 2", Username: "username 3", Password: "password 3", Url: "url 3", Notes: "notes 3"},
+	}
+	paths := []string{"path 1", "path 2"}
+	secretsDB := keepass.SecretsDB{
+		EntriesByPath: secretsGroupedByPath,
+		PathsInOrder:  paths,
+	}
+	return secretsDB
+}
