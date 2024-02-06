@@ -28,7 +28,7 @@ func CreateDBFileEntry(masterPasswordDialog *MasterPasswordDialog, parent fyne.W
 			byteContent, err = io.ReadAll(dir)
 			defer dir.Close()
 			if err == nil {
-				(*masterPasswordDialog).ShowDialog(fileURI.String(), &byteContent)
+				go (*masterPasswordDialog).ShowDialog(fileURI.String(), &byteContent)
 			}
 			if err != nil {
 				slog.Error("Error setting path: %s", fileURI.Path(), err)
