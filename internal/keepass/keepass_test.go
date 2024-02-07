@@ -244,6 +244,8 @@ func TestDeleteSecretEntry_ShouldDeleteAnEntryThatExists(t *testing.T) {
 	assert.Equal(t, "entry_in_RG1_2", entriesForRootG1[1].Title)
 	assert.Equal(t, "G2", entriesForRootG1[2].Title)
 
+	assert.Equal(t, []string{"Root", "Root|G1", "Root|G1|G2"}, secretsDB.PathsInOrder)
+
 	deleted := secretsDB.DeleteSecretEntry(keepass.SecretEntry{
 		Group: "Root|G1", Title: "entry_in_RG1_2",
 		Username: "user_in_RG1_2", Password: "password_in_RG1_2",
@@ -258,10 +260,21 @@ func TestDeleteSecretEntry_ShouldDeleteAnEntryThatExists(t *testing.T) {
 
 	assert.Equal(t, "entry_in_RG1", entriesForRootG1[0].Title)
 	assert.Equal(t, "G2", entriesForRootG1[1].Title)
+
+	assert.Equal(t, []string{"Root", "Root|G1", "Root|G1|G2"}, secretsDB.PathsInOrder)
 }
 
 func TestDeleteSecretEntry_ShouldDeleteGroupAndItsContents(t *testing.T) {
 	secretsDB := secretsDBForTesting()
+
+	entriesForRoot := secretsDB.EntriesByPath["Root"]
+
+	assert.Equal(t, 2, len(entriesForRoot))
+
+	assert.Equal(t, "entry_in_root", entriesForRoot[0].Title)
+	assert.Equal(t, "G1", entriesForRoot[1].Title)
+
+	assert.Equal(t, []string{"Root", "Root|G1", "Root|G1|G2"}, secretsDB.PathsInOrder)
 
 	entriesForRootG1 := secretsDB.EntriesByPath["Root|G1"]
 
@@ -271,29 +284,24 @@ func TestDeleteSecretEntry_ShouldDeleteGroupAndItsContents(t *testing.T) {
 	assert.Equal(t, "entry_in_RG1_2", entriesForRootG1[1].Title)
 	assert.Equal(t, "G2", entriesForRootG1[2].Title)
 
-	entriesForRootG1G2, ok := secretsDB.EntriesByPath["Root|G1|G2"]
-
-	assert.True(t, ok, "G2 should have entries")
-
-	assert.Equal(t, 1, len(entriesForRootG1G2))
-
 	deleted := secretsDB.DeleteSecretEntry(keepass.SecretEntry{
-		Group: "Root|G1", Title: "G2",
-		Notes: "", Path: []string{"Root", "G1"}, IsGroup: true,
+		Group: "Root", Title: "G1",
+		Notes: "", Path: []string{"Root"}, IsGroup: true,
 	})
 
 	assert.True(t, deleted, "Should delete the group and its contents")
 
-	entriesForRootG1 = secretsDB.EntriesByPath["Root|G1"]
+	_, ok := secretsDB.EntriesByPath["Root|G1"]
 
-	assert.Equal(t, 2, len(entriesForRootG1))
+	assert.False(t, ok, "G1 should not have entries")
 
-	assert.Equal(t, "entry_in_RG1", entriesForRootG1[0].Title)
-	assert.Equal(t, "entry_in_RG1_2", entriesForRootG1[1].Title)
+	entriesForRoot = secretsDB.EntriesByPath["Root"]
 
-	_, ok = secretsDB.EntriesByPath["Root|G1|G2"]
+	assert.Equal(t, 1, len(entriesForRoot))
 
-	assert.False(t, ok, "G2 should not have entries")
+	assert.Equal(t, "entry_in_root", entriesForRoot[0].Title)
+
+	assert.Equal(t, []string{"Root"}, secretsDB.PathsInOrder)
 }
 
 func secretsDBForTesting() keepass.SecretsDB {
@@ -301,7 +309,7 @@ func secretsDBForTesting() keepass.SecretsDB {
 
 	entriesByPath["Root"] = []keepass.SecretEntry{
 		{
-			Group: "Root", Title: "entry_in_RG1",
+			Group: "Root", Title: "entry_in_root",
 			Username: "user_in_root", Password: "password_in_root",
 			Url: "https://rootEntry.com", Notes: "", Path: []string{"Root"},
 		},

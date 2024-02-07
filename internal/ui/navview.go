@@ -3,26 +3,31 @@ package ui
 import (
 	"errors"
 	"keepassui/internal/keepass"
+	"log/slog"
 	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
 type NavView struct {
 	fullContainer     *fyne.Container
+	navTop            *fyne.Container
+	saveButton        *widget.Button
 	breadCrumbs       *fyne.Container
+	generalButtons    *fyne.Container
 	listPanel         *fyne.Container
 	detailedView      *DetailedView
 	parent            fyne.Window
 	dbPathAndPassword *DBPathAndPassword
 	createReader      ToSecretReaderFn
 	currentPath       string
-	secretsDB         keepass.SecretsDB
+	secretsDB         *keepass.SecretsDB
 }
 
 func (n *NavView) DataChanged() {
@@ -39,9 +44,92 @@ func (n *NavView) DataChanged() {
 		return
 	}
 
-	n.secretsDB = secretsDB
+	n.secretsDB = &secretsDB
 
 	n.UpdateNavView(secretsDB.PathsInOrder[0])
+
+	n.saveButton.OnTapped = func() {
+		bytes, err := secretsDB.WriteDBBytes(n.dbPathAndPassword.Password)
+
+		if err != nil {
+			dialog.ShowError(err, n.parent)
+			return
+		}
+		fileSaveDialog := createFileSaveDialog(bytes, n.dbPathAndPassword.UriID, n.parent)
+
+		if fileSaveDialog != nil {
+			fileSaveDialog.Show()
+		}
+	}
+
+	n.fullContainer.Show()
+}
+
+func createFileSaveDialog(bytes []byte, originalURI string, parent fyne.Window) *dialog.FileDialog {
+	fileSaveDialog := dialog.NewFileSave(func(uc fyne.URIWriteCloser, err error) {
+
+		if err != nil {
+			dialog.ShowError(err, parent)
+			return
+		}
+
+		if uc == nil {
+			return
+		}
+		defer uc.Close()
+		_, writeerr := uc.Write(bytes)
+
+		if writeerr != nil {
+			dialog.ShowError(writeerr, parent)
+			return
+		}
+
+	}, parent)
+
+	fURI, uriErr := storage.ParseURI(originalURI)
+	if uriErr != nil {
+		dialog.ShowError(uriErr, parent)
+		return nil
+	}
+
+	locationURI, err := getLocationURI(fURI)
+	if err != nil {
+		dialog.ShowError(err, parent)
+		return nil
+	}
+	if locationURI != nil {
+		fileSaveDialog.SetLocation(locationURI)
+		fileSaveDialog.SetFileName(fURI.Name())
+	}
+
+	fileSaveDialog.SetFilter(storage.NewExtensionFileFilter([]string{".kdbx"}))
+	return fileSaveDialog
+}
+
+func getLocationURI(fURI fyne.URI) (fyne.ListableURI, error) {
+	if !fyne.CurrentDevice().IsMobile() {
+		listable, err := storage.CanList(fURI)
+
+		if err != nil {
+			slog.Error(err.Error())
+		}
+		// if full URI is not listable, attempt with parent
+		if !listable {
+			locationURI, err := storage.Parent(fURI)
+			if err == nil {
+				listable, err = storage.CanList(locationURI)
+			}
+			if err == nil && listable {
+				listableURI, err := storage.ListerForURI(locationURI)
+				if err != nil {
+					return nil, err
+				} else {
+					return listableURI, nil
+				}
+			}
+		}
+	}
+	return nil, nil
 }
 
 func (n *NavView) UpdateNavView(path string) {
@@ -158,8 +246,18 @@ func createListNav(listOfSecretsForPath []keepass.SecretEntry, detailedView *Det
 func CreateNavView(dbPathAndPassword *DBPathAndPassword, detailedView *DetailedView, parent fyne.Window, createReader ToSecretReaderFn) NavView {
 
 	breadCrumbs := container.NewHBox()
+	generalButtons := container.NewHBox()
+
+	navTop := container.NewBorder(nil, nil, breadCrumbs, generalButtons, nil)
+
+	saveButton := widget.NewButtonWithIcon("save", theme.DocumentSaveIcon(), func() {
+
+	})
+	generalButtons.Add(saveButton)
+
 	listPanel := container.NewStack()
-	fullContainer := container.NewBorder(container.NewVBox(breadCrumbs, widget.NewSeparator()), nil, nil, nil, listPanel)
+	fullContainer := container.NewBorder(container.NewVBox(navTop, widget.NewSeparator()), nil, nil, nil, listPanel)
+	fullContainer.Hide()
 
 	return NavView{
 		fullContainer:     fullContainer,
@@ -170,5 +268,8 @@ func CreateNavView(dbPathAndPassword *DBPathAndPassword, detailedView *DetailedV
 		dbPathAndPassword: dbPathAndPassword,
 		createReader:      createReader,
 		currentPath:       "",
+		generalButtons:    generalButtons,
+		navTop:            navTop,
+		saveButton:        saveButton,
 	}
 }

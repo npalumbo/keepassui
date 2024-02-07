@@ -114,20 +114,25 @@ func (secretsDB *SecretsDB) DeleteSecretEntry(secretEntry SecretEntry) bool {
 	secretsDB.EntriesByPath[secretEntry.Group] = entriesByPathExcludingIdx
 
 	if secretEntry.IsGroup {
-		// if it's a group we need to delete the map all the entries for the path that the groups define and the entry in paths in order
 
 		expandedPath := append(secretEntry.Path, secretEntry.Title)
 		expandedPathInString := strings.Join(expandedPath, "|")
 
+		// if it's a group we need to delete the map all the entries for the path that the groups define and the entry in paths in order
 		delete(secretsDB.EntriesByPath, expandedPathInString)
 
 		pathsInOrder := secretsDB.PathsInOrder
 
-		idxPath := slices.IndexFunc(pathsInOrder, func(s string) bool { return s == expandedPathInString })
+		// We also have to deleted the path for the group and all its subgroups
+		for {
+			idxPath := slices.IndexFunc(pathsInOrder, func(s string) bool { return strings.Contains(s, expandedPathInString) })
+			if idxPath == -1 {
+				break
+			}
+			pathsInOrder = append(pathsInOrder[:idxPath], pathsInOrder[idxPath+1:]...)
+			secretsDB.PathsInOrder = pathsInOrder
+		}
 
-		pathsInOrderExcludingIdxPath := append(pathsInOrder[:idxPath], pathsInOrder[idxPath+1:]...)
-
-		secretsDB.PathsInOrder = pathsInOrderExcludingIdxPath
 	}
 
 	return true
