@@ -163,6 +163,38 @@ func TestNavView_DeleteFirstEntry(t *testing.T) {
 	test.AssertImageMatches(t, "navView_two_groups_nested_group_with_one_entry_deleted.png", w.Canvas().Capture())
 }
 
+func TestNavView_TapSaveButtonOpensSaveDialog(t *testing.T) {
+	w := test.NewWindow(container.NewWithoutLayout())
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	dbPathAndPassword := &DBPathAndPassword{UriID: "file://path", Password: "password", ContentInBytes: []byte{}}
+
+	secretReader := mock_keepass.NewMockSecretReader(mockCtrl)
+
+	secretsDBWithTwoGroups := secretsDBWithTwoGroups()
+	secretReader.EXPECT().ReadEntriesFromContentGroupedByPath().Times(1).Return(
+		secretsDBWithTwoGroups,
+		nil,
+	)
+
+	navView := CreateNavView(dbPathAndPassword, nil, w, func(d DBPathAndPassword) keepass.SecretReader {
+		return secretReader
+	})
+	w.SetContent(navView.fullContainer)
+	w.Resize(fyne.NewSize(600, 600))
+
+	navView.DataChanged()
+	navView.fullContainer.Refresh()
+
+	test.AssertImageMatches(t, "navView_two_groups.png", w.Canvas().Capture())
+
+	// Ideally we would simulate a click from the UI but I struggle to find the right open button from the list
+	test.Tap(navView.saveButton)
+
+	test.AssertImageMatches(t, "navView_two_groups_tap_save_button.png", w.Canvas().Capture())
+}
+
 func secretsDBForTesting() keepass.SecretsDB {
 	secretsGroupedByPath := make(map[string][]keepass.SecretEntry)
 	secretsGroupedByPath["path 1"] = []keepass.SecretEntry{{Title: "title", Group: "path 1", Username: "username", Password: "password", Url: "url", Notes: "notes"}}
