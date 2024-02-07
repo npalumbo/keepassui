@@ -92,34 +92,44 @@ func createFileSaveDialog(bytes []byte, originalURI string, parent fyne.Window) 
 		return nil
 	}
 
+	locationURI, err := getLocationURI(fURI)
+	if err != nil {
+		dialog.ShowError(err, parent)
+		return nil
+	}
+	if locationURI != nil {
+		fileSaveDialog.SetLocation(locationURI)
+		fileSaveDialog.SetFileName(fURI.Name())
+	}
+
+	fileSaveDialog.SetFilter(storage.NewExtensionFileFilter([]string{".kdbx"}))
+	return fileSaveDialog
+}
+
+func getLocationURI(fURI fyne.URI) (fyne.ListableURI, error) {
 	if !fyne.CurrentDevice().IsMobile() {
-		locationURI := fURI
-		listable, err := storage.CanList(locationURI)
-		// if full URI is not listable, attempt with parent
+		listable, err := storage.CanList(fURI)
+
 		if err != nil {
 			slog.Error(err.Error())
 		}
+		// if full URI is not listable, attempt with parent
 		if !listable {
-			locationURI, err = storage.Parent(fURI)
+			locationURI, err := storage.Parent(fURI)
 			if err == nil {
 				listable, err = storage.CanList(locationURI)
 			}
 			if err == nil && listable {
 				listableURI, err := storage.ListerForURI(locationURI)
-				if err == nil {
-					fileSaveDialog.SetLocation(listableURI)
-					fileSaveDialog.SetFileName(fURI.Name())
+				if err != nil {
+					return nil, err
 				} else {
-					dialog.ShowError(err, parent)
-					return nil
+					return listableURI, nil
 				}
 			}
 		}
-
 	}
-
-	fileSaveDialog.SetFilter(storage.NewExtensionFileFilter([]string{fURI.Extension()}))
-	return fileSaveDialog
+	return nil, nil
 }
 
 func (n *NavView) UpdateNavView(path string) {
