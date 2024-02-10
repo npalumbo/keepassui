@@ -20,7 +20,7 @@ func (m *MainContent) MakeUI() fyne.CanvasObject {
 	border := container.NewBorder(nil,
 		m.NavView.detailedView.container, nil, nil, m.NavView.fullContainer,
 	)
-	return container.NewBorder(m.DBFileEntry.Container, nil, nil, nil, border)
+	return container.NewStack(container.NewBorder(m.DBFileEntry.Container, nil, nil, nil, border))
 
 }
 
