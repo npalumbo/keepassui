@@ -16,8 +16,8 @@ func TestNavView_DataChanged_Does_Nothing_When_DBPathAndPassword_is_EmptyObject(
 	dbPathAndPassword := &DBPathAndPassword{}
 	w := test.NewWindow(container.NewWithoutLayout())
 	w.Resize(fyne.NewSize(600, 600))
-
-	navView := CreateNavView(dbPathAndPassword, nil, w, nil)
+	stageManager := CreateStageManager(container.NewStack())
+	navView := CreateNavView(dbPathAndPassword, nil, nil, w, stageManager, nil)
 
 	navView.DataChanged()
 
@@ -35,8 +35,8 @@ func TestNavView_DataChanged_Shows_Error_Error_Reading_secrets(t *testing.T) {
 
 	secretReader := mock_keepass.NewMockSecretReader(mockCtrl)
 	secretReader.EXPECT().ReadEntriesFromContentGroupedByPath().Times(1).Return(keepass.SecretsDB{}, errors.New("Fake Error"))
-
-	navView := CreateNavView(dbPathAndPassword, nil, w, func(d DBPathAndPassword) keepass.SecretReader {
+	stageManager := CreateStageManager(container.NewStack())
+	navView := CreateNavView(dbPathAndPassword, nil, nil, w, stageManager, func(d DBPathAndPassword) keepass.SecretReader {
 		return secretReader
 	})
 
@@ -58,16 +58,16 @@ func TestNavView_DataChanged(t *testing.T) {
 		secretsDBForTesting(),
 		nil,
 	)
-
-	navView := CreateNavView(dbPathAndPassword, nil, w, func(d DBPathAndPassword) keepass.SecretReader {
+	stageManager := CreateStageManager(container.NewStack())
+	navView := CreateNavView(dbPathAndPassword, nil, nil, w, stageManager, func(d DBPathAndPassword) keepass.SecretReader {
 		return secretReader
 	})
 
-	w.SetContent(navView.fullContainer)
+	w.SetContent(navView.navAndListContainer)
 	w.Resize(fyne.NewSize(600, 600))
 
 	navView.DataChanged()
-	navView.fullContainer.Refresh()
+	navView.navAndListContainer.Refresh()
 	test.AssertImageMatches(t, "navView_one_group.png", w.Canvas().Capture())
 }
 
@@ -84,15 +84,15 @@ func TestNavView_DataChanged_two_groups(t *testing.T) {
 		secretsDBWithTwoGroups(),
 		nil,
 	)
-
-	navView := CreateNavView(dbPathAndPassword, nil, w, func(d DBPathAndPassword) keepass.SecretReader {
+	stageManager := CreateStageManager(container.NewStack())
+	navView := CreateNavView(dbPathAndPassword, nil, nil, w, stageManager, func(d DBPathAndPassword) keepass.SecretReader {
 		return secretReader
 	})
-	w.SetContent(navView.fullContainer)
+	w.SetContent(navView.navAndListContainer)
 	w.Resize(fyne.NewSize(600, 600))
 
 	navView.DataChanged()
-	navView.fullContainer.Refresh()
+	navView.navAndListContainer.Refresh()
 	test.AssertImageMatches(t, "navView_two_groups.png", w.Canvas().Capture())
 }
 
@@ -109,15 +109,15 @@ func TestNavView_NavigateToNestedFolder(t *testing.T) {
 		secretsDBWithTwoGroups(),
 		nil,
 	)
-
-	navView := CreateNavView(dbPathAndPassword, nil, w, func(d DBPathAndPassword) keepass.SecretReader {
+	stageManager := CreateStageManager(container.NewStack())
+	navView := CreateNavView(dbPathAndPassword, nil, nil, w, stageManager, func(d DBPathAndPassword) keepass.SecretReader {
 		return secretReader
 	})
-	w.SetContent(navView.fullContainer)
+	w.SetContent(navView.navAndListContainer)
 	w.Resize(fyne.NewSize(600, 600))
 
 	navView.DataChanged()
-	navView.fullContainer.Refresh()
+	navView.navAndListContainer.Refresh()
 
 	test.AssertImageMatches(t, "navView_two_groups.png", w.Canvas().Capture())
 
@@ -141,15 +141,15 @@ func TestNavView_DeleteFirstEntry(t *testing.T) {
 		secretsDBWithTwoGroups,
 		nil,
 	)
-
-	navView := CreateNavView(dbPathAndPassword, nil, w, func(d DBPathAndPassword) keepass.SecretReader {
+	stageManager := CreateStageManager(container.NewStack())
+	navView := CreateNavView(dbPathAndPassword, nil, nil, w, stageManager, func(d DBPathAndPassword) keepass.SecretReader {
 		return secretReader
 	})
-	w.SetContent(navView.fullContainer)
+	w.SetContent(navView.navAndListContainer)
 	w.Resize(fyne.NewSize(600, 600))
 
 	navView.DataChanged()
-	navView.fullContainer.Refresh()
+	navView.navAndListContainer.Refresh()
 
 	test.AssertImageMatches(t, "navView_two_groups.png", w.Canvas().Capture())
 
@@ -177,15 +177,15 @@ func TestNavView_TapSaveButtonOpensSaveDialog(t *testing.T) {
 		secretsDBWithTwoGroups,
 		nil,
 	)
-
-	navView := CreateNavView(dbPathAndPassword, nil, w, func(d DBPathAndPassword) keepass.SecretReader {
+	stageManager := CreateStageManager(container.NewStack())
+	navView := CreateNavView(dbPathAndPassword, nil, nil, w, stageManager, func(d DBPathAndPassword) keepass.SecretReader {
 		return secretReader
 	})
-	w.SetContent(navView.fullContainer)
+	w.SetContent(navView.navAndListContainer)
 	w.Resize(fyne.NewSize(600, 600))
 
 	navView.DataChanged()
-	navView.fullContainer.Refresh()
+	navView.navAndListContainer.Refresh()
 
 	test.AssertImageMatches(t, "navView_two_groups.png", w.Canvas().Capture())
 

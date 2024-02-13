@@ -12,31 +12,37 @@ type MainContent struct {
 	MasterPasswordDialog MasterPasswordDialog
 	NavView              NavView
 	detailedView         DetailedView
+	stageManager         StageManager
 }
 
 type ToSecretReaderFn func(d DBPathAndPassword) keepass.SecretReader
 
 func (m *MainContent) MakeUI() fyne.CanvasObject {
-	border := container.NewBorder(nil,
-		m.NavView.detailedView.container, nil, nil, m.NavView.fullContainer,
-	)
-	return container.NewStack(container.NewBorder(m.DBFileEntry.Container, nil, nil, nil, border))
-
+	return container.NewStack(container.NewBorder(m.DBFileEntry.Container, nil, nil, nil, m.stageManager.currentViewContainer))
 }
 
 func CreateMainContent(parent fyne.Window, stor fyne.Storage) MainContent {
 	dbPathAndPassword := &DBPathAndPassword{}
 	masterPasswordDialog := CreateDialog(dbPathAndPassword, parent)
 	dbFileEntry := CreateDBFileEntry(&masterPasswordDialog, parent)
-	detailedView := CreateDetailedView()
-	navView := CreateNavView(dbPathAndPassword, detailedView, parent, CreateKeepassSecretReaderFromDBPathAndPassword)
+	currentContainer := container.NewStack()
+	stageManager := CreateStageManager(currentContainer)
+	detailedView := CreateDetailedView(stageManager)
+	addEntryView := CreateAddEntryView(stageManager)
+	navView := CreateNavView(dbPathAndPassword, &addEntryView, &detailedView, parent, stageManager, CreateKeepassSecretReaderFromDBPathAndPassword)
+
+	stageManager.RegisterStager(&navView)
+	stageManager.RegisterStager(&addEntryView)
+	stageManager.RegisterStager(&detailedView)
+
 	masterPasswordDialog.AddListener(&navView)
 
 	return MainContent{
 		DBFileEntry:          dbFileEntry,
 		MasterPasswordDialog: masterPasswordDialog,
 		NavView:              navView,
-		detailedView:         *detailedView,
+		detailedView:         detailedView,
+		stageManager:         stageManager,
 	}
 }
 

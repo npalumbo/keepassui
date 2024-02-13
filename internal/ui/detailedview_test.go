@@ -10,17 +10,19 @@ import (
 )
 
 func TestCreateDetailedView_Hidden(t *testing.T) {
-	detailedView := CreateDetailedView()
+	stageManager := CreateStageManager(container.NewStack())
+	detailedView := CreateDetailedView(stageManager)
 	w := test.NewWindow(container.NewWithoutLayout())
-	w.SetContent(detailedView.container)
+	w.SetContent(detailedView.secretForm.FormContainer)
 
 	test.AssertImageMatches(t, "detailedView_Create.png", w.Canvas().Capture())
 }
 
 func TestUpdateDetailes_Shown(t *testing.T) {
-	detailedView := CreateDetailedView()
+	stageManager := CreateStageManager(container.NewStack())
+	detailedView := CreateDetailedView(stageManager)
 	w := test.NewWindow(container.NewWithoutLayout())
-	w.SetContent(detailedView.container)
+	w.SetContent(detailedView.secretForm.FormContainer)
 
 	secretEntry := keepass.SecretEntry{
 		Title:    "title",
@@ -30,7 +32,7 @@ func TestUpdateDetailes_Shown(t *testing.T) {
 		Url:      "url",
 		Notes:    "notes",
 	}
-	detailedView.UpdateDetails(secretEntry)
+	detailedView.ShowDetails(secretEntry)
 
 	w.Resize(fyne.Size{Width: 300, Height: 300})
 	test.AssertImageMatches(t, "detailedView_UpdateDetails_Shown.png", w.Canvas().Capture())

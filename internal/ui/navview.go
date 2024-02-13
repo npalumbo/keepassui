@@ -16,7 +16,8 @@ import (
 )
 
 type NavView struct {
-	fullContainer           *fyne.Container
+	stageManager            StageManager
+	navAndListContainer     *fyne.Container
 	navTop                  *fyne.Container
 	saveButton              *widget.Button
 	groupCreateButton       *widget.Button
@@ -25,6 +26,7 @@ type NavView struct {
 	generalButtons          *fyne.Container
 	listPanel               *fyne.Container
 	detailedView            *DetailedView
+	addEntryView            *AddEntryView
 	parent                  fyne.Window
 	dbPathAndPassword       *DBPathAndPassword
 	createReader            ToSecretReaderFn
@@ -64,7 +66,7 @@ func (n *NavView) DataChanged() {
 		}
 	}
 
-	n.fullContainer.Show()
+	n.stageManager.TakeOver("NavView")
 }
 
 func createFileSaveDialog(bytes []byte, originalURI string, parent fyne.Window) *dialog.FileDialog {
@@ -181,63 +183,8 @@ func (n *NavView) UpdateNavView(path string) {
 	}
 
 	n.secretEntryCreateButton.OnTapped = func() {
-		titleEntry := widget.NewEntry()
-		titleEntry.Validator = createValidator("Title")
-		userNameEntry := widget.NewEntry()
-		userNameEntry.Validator = createValidator("Username")
-		passwordEntry := widget.NewPasswordEntry()
-		passwordEntry.Validator = createValidator("Password")
-		urlEntry := widget.NewEntry()
-		urlEntry.Validator = createValidator("URL")
-		notesEntry := widget.NewEntry()
-		notesEntry.Validator = createValidator("Notes")
-
-		// formItems := []*widget.FormItem{
-		// 	widget.NewFormItem("Title", titleEntry),
-		// 	widget.NewFormItem("Username", userNameEntry),
-		// 	widget.NewFormItem("Password", passwordEntry),
-		// 	widget.NewFormItem("URL", urlEntry),
-		// 	widget.NewFormItem("Notes", notesEntry),
-		// }
-
-		// w := fyne.CurrentApp().NewWindow("Add new group")
-		form := widget.NewForm(widget.NewFormItem("Title", titleEntry),
-			widget.NewFormItem("Username", userNameEntry),
-			widget.NewFormItem("Password", passwordEntry),
-			widget.NewFormItem("URL", urlEntry),
-			widget.NewFormItem("Notes", notesEntry))
-		form.OnSubmit = func() {
-			newSecret := keepass.SecretEntry{Path: pathComponents, Group: path, Title: titleEntry.Text, IsGroup: false, Username: userNameEntry.Text, Password: passwordEntry.Text, Url: urlEntry.Text, Notes: notesEntry.Text}
-			n.secretsDB.AddSecretEntry(newSecret)
-			n.UpdateNavView(path)
-			x := n.parent.Content()
-			y, _ := x.(*fyne.Container)
-			y.Objects[0].Hide()
-			y.Add(form)
-		}
-		form.OnCancel = func() { n.parent.SetContent(n.fullContainer) }
-
-		// w.SetContent(form)
-		// w.Show()
-
-		// w.SetContent()
-
-		// form := dialog.NewForm("Add new group", "Confirm", "Cancel", formItems, func(valid bool) {
-		// 	if valid {
-		// 		validationEntry := widget.NewEntry()
-		// 		validationEntry.Validator = validation.NewAllStrings(titleEntry.Validator, userNameEntry.Validator, passwordEntry.Validator, urlEntry.Validator)
-		// 		validationErr := validationEntry.Validate()
-		// 		if validationErr == nil {
-		// 			newSecret := keepass.SecretEntry{Path: pathComponents, Group: path, Title: titleEntry.Text, IsGroup: false, Username: userNameEntry.Text, Password: passwordEntry.Text, Url: urlEntry.Text, Notes: notesEntry.Text}
-		// 			n.secretsDB.AddSecretEntry(newSecret)
-		// 			n.UpdateNavView(path)
-		// 		} else {
-		// 			dialog.ShowError(validationErr, n.parent)
-		// 		}
-
-		// 	}
-		// }, n.parent)
-		// form.Show()
+		templateEntry := keepass.SecretEntry{Path: pathComponents, Group: path, IsGroup: false}
+		n.addEntryView.AddEntry(&templateEntry, n.secretsDB)
 	}
 }
 
@@ -285,9 +232,9 @@ func createListNav(listOfSecretsForPath []keepass.SecretEntry, detailedView *Det
 				}
 			}
 
+			label.SetText(secret.Title)
 			if secret.IsGroup {
 				icon.SetResource(theme.FolderIcon())
-				label.SetText(secret.Title)
 				copyPasswordButton.Hide()
 				showInfoButton.Hide()
 				openGroupButton.OnTapped = func() {
@@ -296,12 +243,11 @@ func createListNav(listOfSecretsForPath []keepass.SecretEntry, detailedView *Det
 			} else {
 				openGroupButton.Hide()
 				icon.SetResource(theme.FileTextIcon())
-				label.SetText(secret.Title)
 				copyPasswordButton.OnTapped = func() {
 					parent.Clipboard().SetContent(secret.Password)
 				}
 				showInfoButton.OnTapped = func() {
-					detailedView.UpdateDetails(secret)
+					detailedView.ShowDetails(secret)
 				}
 
 			}
@@ -318,7 +264,7 @@ func createListNav(listOfSecretsForPath []keepass.SecretEntry, detailedView *Det
 	return newList, nil
 }
 
-func CreateNavView(dbPathAndPassword *DBPathAndPassword, detailedView *DetailedView, parent fyne.Window, createReader ToSecretReaderFn) NavView {
+func CreateNavView(dbPathAndPassword *DBPathAndPassword, addEntryView *AddEntryView, detailedView *DetailedView, parent fyne.Window, stageManager StageManager, createReader ToSecretReaderFn) NavView {
 
 	breadCrumbs := container.NewHBox()
 	generalButtons := container.NewHBox()
@@ -339,13 +285,14 @@ func CreateNavView(dbPathAndPassword *DBPathAndPassword, detailedView *DetailedV
 	generalButtons.Add(groupCreateButton)
 
 	listPanel := container.NewStack()
-	fullContainer := container.NewBorder(container.NewVBox(navTop, widget.NewSeparator()), nil, nil, nil, listPanel)
-	fullContainer.Hide()
+	navAndListContainer := container.NewBorder(container.NewVBox(navTop, widget.NewSeparator()), nil, nil, nil, listPanel)
 
 	return NavView{
-		fullContainer:           fullContainer,
+		stageManager:            stageManager,
+		navAndListContainer:     navAndListContainer,
 		breadCrumbs:             breadCrumbs,
 		listPanel:               listPanel,
+		addEntryView:            addEntryView,
 		detailedView:            detailedView,
 		parent:                  parent,
 		dbPathAndPassword:       dbPathAndPassword,
@@ -360,11 +307,14 @@ func CreateNavView(dbPathAndPassword *DBPathAndPassword, detailedView *DetailedV
 
 }
 
-func createValidator(fieldName string) fyne.StringValidator {
-	return func(s string) error {
-		if s == "" {
-			return errors.New(s + " cannot be empty")
-		}
-		return nil
-	}
+func (n *NavView) GetPaintedContainer() *fyne.Container {
+	return n.navAndListContainer
+}
+
+func (n *NavView) GetStageName() string {
+	return "NavView"
+}
+
+func (n *NavView) ExecuteOnResume() {
+	n.UpdateNavView(n.currentPath)
 }
