@@ -16,7 +16,7 @@ import (
 )
 
 type NavView struct {
-	stageManager            StageManager
+	stageManager            *StageManager
 	navAndListContainer     *fyne.Container
 	navTop                  *fyne.Container
 	saveButton              *widget.Button
@@ -66,7 +66,10 @@ func (n *NavView) DataChanged() {
 		}
 	}
 
-	n.stageManager.TakeOver("NavView")
+	if n.stageManager != nil {
+		n.stageManager.TakeOver("NavView")
+	}
+
 }
 
 func createFileSaveDialog(bytes []byte, originalURI string, parent fyne.Window) *dialog.FileDialog {
@@ -264,7 +267,7 @@ func createListNav(listOfSecretsForPath []keepass.SecretEntry, detailedView *Det
 	return newList, nil
 }
 
-func CreateNavView(dbPathAndPassword *DBPathAndPassword, addEntryView *AddEntryView, detailedView *DetailedView, parent fyne.Window, stageManager StageManager, createReader ToSecretReaderFn) NavView {
+func CreateNavView(dbPathAndPassword *DBPathAndPassword, addEntryView *AddEntryView, detailedView *DetailedView, parent fyne.Window, stageManager *StageManager, createReader ToSecretReaderFn) NavView {
 
 	breadCrumbs := container.NewHBox()
 	generalButtons := container.NewHBox()

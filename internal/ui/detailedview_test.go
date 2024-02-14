@@ -18,9 +18,10 @@ func TestCreateDetailedView_Hidden(t *testing.T) {
 	test.AssertImageMatches(t, "detailedView_Create.png", w.Canvas().Capture())
 }
 
-func TestUpdateDetailes_Shown(t *testing.T) {
+func TestUpdateDetailed_Shown(t *testing.T) {
 	stageManager := CreateStageManager(container.NewStack())
 	detailedView := CreateDetailedView(stageManager)
+	stageManager.RegisterStager(&detailedView)
 	w := test.NewWindow(container.NewWithoutLayout())
 	w.SetContent(detailedView.secretForm.FormContainer)
 

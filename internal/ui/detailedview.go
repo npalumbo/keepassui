@@ -1,8 +1,9 @@
 package ui
 
 import (
-	"fyne.io/fyne/v2"
 	"keepassui/internal/keepass"
+
+	"fyne.io/fyne/v2"
 )
 
 type DetailedView struct {
@@ -10,11 +11,6 @@ type DetailedView struct {
 	secretForm   *SecretForm
 	stageManager StageManager
 }
-
-/*func (d *DetailedView) ExecuteOnResume() {
-	//TODO implement me
-	panic("implement me")
-}*/
 
 func (d *DetailedView) GetPaintedContainer() *fyne.Container {
 	return d.secretForm.FormContainer
@@ -26,7 +22,7 @@ func (d *DetailedView) GetStageName() string {
 
 func (d *DetailedView) ShowDetails(secretEntry keepass.SecretEntry) {
 	d.secretForm.UpdateForm(secretEntry)
-	d.stageManager.TakeOver("DetailedView")
+	d.stageManager.TakeOver(d.GetStageName())
 }
 
 func CreateDetailedView(stageManager StageManager) DetailedView {

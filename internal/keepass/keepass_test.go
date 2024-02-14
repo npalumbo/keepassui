@@ -127,8 +127,8 @@ func Test_AddSecretEntryInANewPath(t *testing.T) {
 	secretsDB := keepass.SecretsDB{PathsInOrder: []string{}, EntriesByPath: make(map[string][]keepass.SecretEntry)}
 
 	secretsDB.AddSecretEntry(keepass.SecretEntry{
-		Group: "Root", Title: "G1",
-		Notes: "Notes are important", Path: []string{"Root"}, IsGroup: true,
+		Group: "", Title: "Root",
+		Notes: "Notes are important", Path: []string{}, IsGroup: true,
 	})
 
 	assert.Equal(t, 1, len(secretsDB.PathsInOrder))
@@ -136,20 +136,20 @@ func Test_AddSecretEntryInANewPath(t *testing.T) {
 
 	assert.Equal(t, 1, len(secretsDB.EntriesByPath))
 
-	entriesForRoot, ok := secretsDB.EntriesByPath["Root"]
+	entries, ok := secretsDB.EntriesByPath[""]
 
-	assert.Equal(t, 1, len(entriesForRoot))
+	assert.Equal(t, 1, len(entries))
 
 	assert.True(t, ok)
 
-	assert.Equal(t, "Root", entriesForRoot[0].Group)
-	assert.Equal(t, "G1", entriesForRoot[0].Title)
-	assert.Equal(t, "Notes are important", entriesForRoot[0].Notes)
-	assert.Equal(t, "", entriesForRoot[0].Username)
-	assert.Equal(t, "", entriesForRoot[0].Password)
-	assert.Equal(t, "", entriesForRoot[0].Url)
-	assert.Equal(t, []string{"Root"}, entriesForRoot[0].Path)
-	assert.True(t, entriesForRoot[0].IsGroup)
+	assert.Equal(t, "", entries[0].Group)
+	assert.Equal(t, "Root", entries[0].Title)
+	assert.Equal(t, "Notes are important", entries[0].Notes)
+	assert.Equal(t, "", entries[0].Username)
+	assert.Equal(t, "", entries[0].Password)
+	assert.Equal(t, "", entries[0].Url)
+	assert.Equal(t, []string{}, entries[0].Path)
+	assert.True(t, entries[0].IsGroup)
 }
 
 func Test_AddSecretEntryInExistingPath(t *testing.T) {
