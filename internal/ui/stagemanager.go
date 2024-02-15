@@ -7,6 +7,12 @@ type StageManager struct {
 	stagerMap            map[string]Stager
 }
 
+//go:generate mockgen -destination=../mocks/ui/mock_stagemanager.go -source=./stagemanager.go
+
+type StagerController interface {
+	TakeOver(name string)
+}
+
 type DefaultStager struct {
 }
 

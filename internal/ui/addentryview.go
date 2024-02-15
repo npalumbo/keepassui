@@ -14,7 +14,7 @@ type EntryUpdater interface {
 type AddEntryView struct {
 	DefaultStager
 	secretForm   *SecretForm
-	stageManager StageManager
+	stageManager StagerController
 }
 
 func (a *AddEntryView) GetPaintedContainer() *fyne.Container {
@@ -40,7 +40,7 @@ func (a *AddEntryView) AddEntry(templateEntry *keepass.SecretEntry, secretsDB *k
 	a.stageManager.TakeOver(a.GetStageName())
 }
 
-func CreateAddEntryView(stageManager StageManager) AddEntryView {
+func CreateAddEntryView(stageManager StagerController) AddEntryView {
 
 	return AddEntryView{
 		secretForm:   nil,
