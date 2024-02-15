@@ -4,6 +4,7 @@ import (
 	"errors"
 	"keepassui/internal/keepass"
 	mock_keepass "keepassui/internal/mocks/keepass"
+	mock_addentryview "keepassui/internal/mocks/ui"
 	"testing"
 
 	"fyne.io/fyne/v2"
@@ -11,6 +12,14 @@ import (
 	"fyne.io/fyne/v2/test"
 	"go.uber.org/mock/gomock"
 )
+
+type MockedSecretReaderFactory struct {
+	mockedSecretReader keepass.SecretReader
+}
+
+func (m MockedSecretReaderFactory) GetSecretReader(d DBPathAndPassword) keepass.SecretReader {
+	return m.mockedSecretReader
+}
 
 func TestNavView_DataChanged_Does_Nothing_When_DBPathAndPassword_is_EmptyObject(t *testing.T) {
 	dbPathAndPassword := &DBPathAndPassword{}
@@ -36,9 +45,7 @@ func TestNavView_DataChanged_Shows_Error_Error_Reading_secrets(t *testing.T) {
 	secretReader := mock_keepass.NewMockSecretReader(mockCtrl)
 	secretReader.EXPECT().ReadEntriesFromContentGroupedByPath().Times(1).Return(keepass.SecretsDB{}, errors.New("Fake Error"))
 
-	navView := CreateNavView(dbPathAndPassword, nil, nil, w, nil, func(d DBPathAndPassword) keepass.SecretReader {
-		return secretReader
-	})
+	navView := CreateNavView(dbPathAndPassword, nil, nil, w, nil, MockedSecretReaderFactory{mockedSecretReader: secretReader})
 
 	navView.DataChanged()
 
@@ -62,9 +69,7 @@ func TestNavView_DataChanged(t *testing.T) {
 		nil,
 	)
 
-	navView := CreateNavView(dbPathAndPassword, nil, nil, w, nil, func(d DBPathAndPassword) keepass.SecretReader {
-		return secretReader
-	})
+	navView := CreateNavView(dbPathAndPassword, nil, nil, w, nil, MockedSecretReaderFactory{mockedSecretReader: secretReader})
 
 	navView.DataChanged()
 	w.SetContent(navView.navAndListContainer)
@@ -86,9 +91,7 @@ func TestNavView_DataChanged_two_groups(t *testing.T) {
 		nil,
 	)
 
-	navView := CreateNavView(dbPathAndPassword, nil, nil, w, nil, func(d DBPathAndPassword) keepass.SecretReader {
-		return secretReader
-	})
+	navView := CreateNavView(dbPathAndPassword, nil, nil, w, nil, MockedSecretReaderFactory{mockedSecretReader: secretReader})
 
 	navView.DataChanged()
 	w.SetContent(navView.navAndListContainer)
@@ -110,9 +113,7 @@ func TestNavView_NavigateToNestedFolder(t *testing.T) {
 		nil,
 	)
 
-	navView := CreateNavView(dbPathAndPassword, nil, nil, w, nil, func(d DBPathAndPassword) keepass.SecretReader {
-		return secretReader
-	})
+	navView := CreateNavView(dbPathAndPassword, nil, nil, w, nil, MockedSecretReaderFactory{mockedSecretReader: secretReader})
 
 	navView.DataChanged()
 	w.SetContent(navView.navAndListContainer)
@@ -140,9 +141,7 @@ func TestNavView_DeleteFirstEntry(t *testing.T) {
 		secretsDBWithTwoGroups,
 		nil,
 	)
-	navView := CreateNavView(dbPathAndPassword, nil, nil, w, nil, func(d DBPathAndPassword) keepass.SecretReader {
-		return secretReader
-	})
+	navView := CreateNavView(dbPathAndPassword, nil, nil, w, nil, MockedSecretReaderFactory{mockedSecretReader: secretReader})
 
 	navView.DataChanged()
 	w.SetContent(navView.navAndListContainer)
@@ -175,9 +174,7 @@ func TestNavView_TapSaveButtonOpensSaveDialog(t *testing.T) {
 		nil,
 	)
 
-	navView := CreateNavView(dbPathAndPassword, nil, nil, w, nil, func(d DBPathAndPassword) keepass.SecretReader {
-		return secretReader
-	})
+	navView := CreateNavView(dbPathAndPassword, nil, nil, w, nil, MockedSecretReaderFactory{mockedSecretReader: secretReader})
 
 	navView.DataChanged()
 
@@ -186,10 +183,71 @@ func TestNavView_TapSaveButtonOpensSaveDialog(t *testing.T) {
 
 	test.AssertImageMatches(t, "navView_two_groups.png", w.Canvas().Capture())
 
-	// Ideally we would simulate a click from the UI but I struggle to find the right open button from the list
 	test.Tap(navView.saveButton)
 
 	test.AssertImageMatches(t, "navView_two_groups_tap_save_button.png", w.Canvas().Capture())
+}
+
+func TestNavView_TapOnNewGroupOpensNewGroupDialog(t *testing.T) {
+	w := test.NewWindow(container.NewWithoutLayout())
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	dbPathAndPassword := &DBPathAndPassword{UriID: "file://path", Password: "password", ContentInBytes: []byte{}}
+
+	secretReader := mock_keepass.NewMockSecretReader(mockCtrl)
+
+	secretsDBWithTwoGroups := secretsDBWithTwoGroups()
+	secretReader.EXPECT().ReadEntriesFromContentGroupedByPath().Times(1).Return(
+		secretsDBWithTwoGroups,
+		nil,
+	)
+
+	navView := CreateNavView(dbPathAndPassword, nil, nil, w, nil, MockedSecretReaderFactory{mockedSecretReader: secretReader})
+
+	navView.DataChanged()
+
+	w.SetContent(navView.navAndListContainer)
+	w.Resize(fyne.NewSize(600, 600))
+
+	test.AssertImageMatches(t, "navView_two_groups.png", w.Canvas().Capture())
+
+	test.Tap(navView.groupCreateButton)
+
+	test.AssertImageMatches(t, "navView_two_groups_tap_new_group_button.png", w.Canvas().Capture())
+}
+
+func TestNavView_TapOnNewSecretCallsAddEntry(t *testing.T) {
+	w := test.NewWindow(container.NewWithoutLayout())
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	dbPathAndPassword := &DBPathAndPassword{UriID: "file://path", Password: "password", ContentInBytes: []byte{}}
+
+	secretReader := mock_keepass.NewMockSecretReader(mockCtrl)
+
+	secretsDBWithTwoGroups := secretsDBWithTwoGroups()
+	secretReader.EXPECT().ReadEntriesFromContentGroupedByPath().Times(1).Return(
+		secretsDBWithTwoGroups,
+		nil,
+	)
+
+	entryUpdater := mock_addentryview.NewMockEntryUpdater(mockCtrl)
+
+	templateSecret := keepass.SecretEntry{Path: []string{"path 1"}, Group: "path 1", IsGroup: false}
+
+	entryUpdater.EXPECT().AddEntry(&templateSecret, &secretsDBWithTwoGroups).Times(1)
+
+	navView := CreateNavView(dbPathAndPassword, entryUpdater, nil, w, nil, MockedSecretReaderFactory{mockedSecretReader: secretReader})
+
+	navView.DataChanged()
+
+	w.SetContent(navView.navAndListContainer)
+	w.Resize(fyne.NewSize(600, 600))
+
+	test.AssertImageMatches(t, "navView_two_groups.png", w.Canvas().Capture())
+
+	test.Tap(navView.secretEntryCreateButton)
 }
 
 func secretsDBForTesting() keepass.SecretsDB {

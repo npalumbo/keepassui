@@ -15,7 +15,18 @@ type MainContent struct {
 	stageManager         StageManager
 }
 
-type ToSecretReaderFn func(d DBPathAndPassword) keepass.SecretReader
+type SecretReaderResolver interface {
+	GetSecretReader(d DBPathAndPassword) keepass.SecretReader
+}
+
+type SecretReaderFactory struct {
+}
+
+var DefaultSecretReaderFactory SecretReaderFactory = SecretReaderFactory{}
+
+func (s SecretReaderFactory) GetSecretReader(d DBPathAndPassword) keepass.SecretReader {
+	return keepass.CipheredKeepassDB{DBBytes: d.ContentInBytes, Password: d.Password, UriID: d.UriID}
+}
 
 func (m *MainContent) MakeUI() fyne.CanvasObject {
 	return container.NewStack(container.NewBorder(m.DBFileEntry.Container, nil, nil, nil, m.stageManager.currentViewContainer))
@@ -29,7 +40,7 @@ func CreateMainContent(parent fyne.Window, stor fyne.Storage) MainContent {
 	stageManager := CreateStageManager(currentContainer)
 	detailedView := CreateDetailedView(stageManager)
 	addEntryView := CreateAddEntryView(stageManager)
-	navView := CreateNavView(dbPathAndPassword, &addEntryView, &detailedView, parent, &stageManager, CreateKeepassSecretReaderFromDBPathAndPassword)
+	navView := CreateNavView(dbPathAndPassword, &addEntryView, &detailedView, parent, &stageManager, DefaultSecretReaderFactory)
 
 	stageManager.RegisterStager(&navView)
 	stageManager.RegisterStager(&addEntryView)
@@ -44,8 +55,4 @@ func CreateMainContent(parent fyne.Window, stor fyne.Storage) MainContent {
 		detailedView:         detailedView,
 		stageManager:         stageManager,
 	}
-}
-
-func CreateKeepassSecretReaderFromDBPathAndPassword(d DBPathAndPassword) keepass.SecretReader {
-	return keepass.CipheredKeepassDB{DBBytes: d.ContentInBytes, Password: d.Password, UriID: d.UriID}
 }

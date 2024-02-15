@@ -1,9 +1,15 @@
 package ui
 
 import (
-	"fyne.io/fyne/v2"
 	"keepassui/internal/keepass"
+
+	"fyne.io/fyne/v2"
 )
+
+//go:generate mockgen -destination=../mocks/ui/mock_addentryview.go -source=./addentryview.go
+type EntryUpdater interface {
+	AddEntry(templateEntry *keepass.SecretEntry, secretsDB *keepass.SecretsDB)
+}
 
 type AddEntryView struct {
 	DefaultStager

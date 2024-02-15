@@ -26,10 +26,10 @@ type NavView struct {
 	generalButtons          *fyne.Container
 	listPanel               *fyne.Container
 	detailedView            *DetailedView
-	addEntryView            *AddEntryView
+	addEntryView            EntryUpdater
 	parent                  fyne.Window
 	dbPathAndPassword       *DBPathAndPassword
-	createReader            ToSecretReaderFn
+	secretReaderResolver    SecretReaderResolver
 	currentPath             string
 	secretsDB               *keepass.SecretsDB
 }
@@ -39,7 +39,7 @@ func (n *NavView) DataChanged() {
 		return
 	}
 
-	secretReader := n.createReader(*n.dbPathAndPassword)
+	secretReader := n.secretReaderResolver.GetSecretReader(*n.dbPathAndPassword)
 
 	secretsDB, err := secretReader.ReadEntriesFromContentGroupedByPath()
 
@@ -267,7 +267,7 @@ func createListNav(listOfSecretsForPath []keepass.SecretEntry, detailedView *Det
 	return newList, nil
 }
 
-func CreateNavView(dbPathAndPassword *DBPathAndPassword, addEntryView *AddEntryView, detailedView *DetailedView, parent fyne.Window, stageManager *StageManager, createReader ToSecretReaderFn) NavView {
+func CreateNavView(dbPathAndPassword *DBPathAndPassword, addEntryView EntryUpdater, detailedView *DetailedView, parent fyne.Window, stageManager *StageManager, secretReaderResolver SecretReaderResolver) NavView {
 
 	breadCrumbs := container.NewHBox()
 	generalButtons := container.NewHBox()
@@ -299,7 +299,7 @@ func CreateNavView(dbPathAndPassword *DBPathAndPassword, addEntryView *AddEntryV
 		detailedView:            detailedView,
 		parent:                  parent,
 		dbPathAndPassword:       dbPathAndPassword,
-		createReader:            createReader,
+		secretReaderResolver:    secretReaderResolver,
 		currentPath:             "",
 		generalButtons:          generalButtons,
 		navTop:                  navTop,
