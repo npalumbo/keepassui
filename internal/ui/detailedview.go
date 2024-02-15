@@ -2,6 +2,7 @@ package ui
 
 import (
 	"keepassui/internal/keepass"
+	"log/slog"
 
 	"fyne.io/fyne/v2"
 )
@@ -23,13 +24,19 @@ func (d *DetailedView) GetStageName() string {
 
 func (d *DetailedView) ShowDetails(secretEntry keepass.SecretEntry) {
 	d.secretForm.UpdateForm(secretEntry)
-	d.stageManager.TakeOver(d.GetStageName())
+	err := d.stageManager.TakeOver(d.GetStageName())
+	if err != nil {
+		slog.Error(err.Error())
+	}
 }
 
 func CreateDetailedView(previousStageName string, stageManager StageManager) DetailedView {
 	secretForm := CreateSecretForm(true)
 	secretForm.DetailsForm.OnSubmit = func() {
-		stageManager.TakeOver("NavView")
+		err := stageManager.TakeOver(previousStageName)
+		if err != nil {
+			slog.Error(err.Error())
+		}
 	}
 	secretForm.DetailsForm.SubmitText = "Back"
 	secretForm.DetailsForm.Refresh()

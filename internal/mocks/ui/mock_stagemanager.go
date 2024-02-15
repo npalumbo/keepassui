@@ -40,9 +40,11 @@ func (m *MockStagerController) EXPECT() *MockStagerControllerMockRecorder {
 }
 
 // TakeOver mocks base method.
-func (m *MockStagerController) TakeOver(name string) {
+func (m *MockStagerController) TakeOver(name string) error {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "TakeOver", name)
+	ret := m.ctrl.Call(m, "TakeOver", name)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
 // TakeOver indicates an expected call of TakeOver.
@@ -74,16 +76,16 @@ func (m *MockStager) EXPECT() *MockStagerMockRecorder {
 	return m.recorder
 }
 
-// ExecuteOnResume mocks base method.
-func (m *MockStager) ExecuteOnResume() {
+// ExecuteOnTakeOver mocks base method.
+func (m *MockStager) ExecuteOnTakeOver() {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "ExecuteOnResume")
+	m.ctrl.Call(m, "ExecuteOnTakeOver")
 }
 
-// ExecuteOnResume indicates an expected call of ExecuteOnResume.
-func (mr *MockStagerMockRecorder) ExecuteOnResume() *gomock.Call {
+// ExecuteOnTakeOver indicates an expected call of ExecuteOnTakeOver.
+func (mr *MockStagerMockRecorder) ExecuteOnTakeOver() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteOnResume", reflect.TypeOf((*MockStager)(nil).ExecuteOnResume))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteOnTakeOver", reflect.TypeOf((*MockStager)(nil).ExecuteOnTakeOver))
 }
 
 // GetPaintedContainer mocks base method.

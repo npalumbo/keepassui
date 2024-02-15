@@ -22,7 +22,7 @@ func TestAddEntryShowsDisabledConfirmButtonWhenNotFullyPopulated(t *testing.T) {
 	addEntryView := ui.CreateAddEntryView("prevousScreen", stagerController)
 
 	templateSecret := keepass.SecretEntry{Path: []string{"path 1"}, Group: "path 1", IsGroup: false}
-	stagerController.EXPECT().TakeOver("AddEntry").Times(1)
+	stagerController.EXPECT().TakeOver("AddEntry").Times(1).Return(nil)
 
 	secretsDB := secretsDBForTesting()
 
@@ -45,7 +45,7 @@ func TestAddEntryTapOnCancelTakesUsToThePreviousScreenWithoutChangingSecretsDB(t
 	addEntryView := ui.CreateAddEntryView("previousScreen", stagerController)
 
 	templateSecret := keepass.SecretEntry{Path: []string{"path 1"}, Group: "path 1", IsGroup: false}
-	stagerController.EXPECT().TakeOver("AddEntry").Times(1)
+	stagerController.EXPECT().TakeOver("AddEntry").Times(1).Return(nil)
 
 	secretsDB := secretsDBForTesting()
 
@@ -69,7 +69,7 @@ func TestAddEntryShowsEnabledConfirmButtonWhenFullyPopulated(t *testing.T) {
 	templateSecret := keepass.SecretEntry{
 		Path: []string{"path 1"}, Group: "path 1", IsGroup: false,
 	}
-	stagerController.EXPECT().TakeOver("AddEntry").Times(1)
+	stagerController.EXPECT().TakeOver("AddEntry").Times(1).Return(nil)
 
 	secretsDB := secretsDBForTesting()
 
@@ -98,7 +98,7 @@ func TestAddEntryTapOnSubmitTakesUsToThePreviousScreenAndAddsEntryToSecretsDB(t 
 	templateSecret := keepass.SecretEntry{
 		Path: []string{"path 1"}, Group: "path 1", IsGroup: false,
 	}
-	stagerController.EXPECT().TakeOver("AddEntry").Times(1)
+	stagerController.EXPECT().TakeOver("AddEntry").Times(1).Return(nil)
 
 	secretsDB := secretsDBForTesting()
 	entriesForPath1 := secretsDB.EntriesByPath["path 1"]
@@ -120,7 +120,7 @@ func TestAddEntryTapOnSubmitTakesUsToThePreviousScreenAndAddsEntryToSecretsDB(t 
 		Title: "aTitle", Username: "aUsername", Password: "aPassword", Url: "aUrl", Notes: "someNotes"},
 	)
 
-	stagerController.EXPECT().TakeOver("previousScreen").Times(1)
+	stagerController.EXPECT().TakeOver("previousScreen").Times(1).Return(nil)
 
 	// Ideally we would use test.Tap() on the Confirm button but the button is not reachable from widget.Form
 	addEntryView.SecretForm.DetailsForm.OnSubmit()

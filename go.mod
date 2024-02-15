@@ -9,10 +9,7 @@ require (
 	go.uber.org/mock v0.4.0
 )
 
-require github.com/goki/freetype v0.0.0-20181231101311-fa8a33aabaff // indirect
-
 require (
-	fyne.io/fyne v1.4.3
 	fyne.io/systray v1.10.1-0.20231115130155-104f5ef7839e // indirect
 	github.com/aead/argon2 v0.0.0-20180111183520-a87724528b07 // indirect
 	github.com/aead/chacha20 v0.0.0-20180709150244-8b13a72661da // indirect

@@ -67,7 +67,10 @@ func (n *NavView) DataChanged() {
 	}
 
 	if n.stageManager != nil {
-		n.stageManager.TakeOver("NavView")
+		err := n.stageManager.TakeOver(n.GetStageName())
+		if err != nil {
+			slog.Error(err.Error())
+		}
 	}
 
 }

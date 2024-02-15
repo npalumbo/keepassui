@@ -2,6 +2,7 @@ package ui
 
 import (
 	"keepassui/internal/keepass"
+	"log/slog"
 
 	"fyne.io/fyne/v2"
 )
@@ -30,15 +31,24 @@ func (a *AddEntryView) AddEntry(templateEntry *keepass.SecretEntry, secretsDB *k
 	secretForm := CreateSecretForm(false)
 	a.SecretForm = &secretForm
 	secretForm.DetailsForm.OnCancel = func() {
-		a.stageManager.TakeOver(a.previousStageName)
+		err := a.stageManager.TakeOver(a.previousStageName)
+		if err != nil {
+			slog.Error(err.Error())
+		}
 	}
 	secretForm.DetailsForm.Refresh()
 	secretForm.DetailsForm.OnSubmit = func() {
 		secretForm.UpdateEntry(templateEntry)
 		secretsDB.AddSecretEntry(*templateEntry)
-		a.stageManager.TakeOver(a.previousStageName)
+		err := a.stageManager.TakeOver(a.previousStageName)
+		if err != nil {
+			slog.Error(err.Error())
+		}
 	}
-	a.stageManager.TakeOver(a.GetStageName())
+	err := a.stageManager.TakeOver(a.GetStageName())
+	if err != nil {
+		slog.Error(err.Error())
+	}
 }
 
 func CreateAddEntryView(previousStageName string, stageManager StagerController) AddEntryView {
