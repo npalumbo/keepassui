@@ -11,9 +11,9 @@ import (
 )
 
 type MasterPasswordDialog struct {
-	dbPathAndPassword *DBPathAndPassword
-	dialog            *dialog.FormDialog
-	passwordEntry     *widget.Entry
+	DbPathAndPassword *DBPathAndPassword
+	Dialog            *dialog.FormDialog
+	PasswordEntry     *widget.Entry
 	formItems         []*widget.FormItem
 	parent            fyne.Window
 	notify            binding.String
@@ -32,9 +32,9 @@ func CreateDialog(dbPathAndPassword *DBPathAndPassword, parent fyne.Window) Mast
 	formItems = append(formItems, widget.NewFormItem("password", passwordEntry))
 
 	return MasterPasswordDialog{
-		dbPathAndPassword: dbPathAndPassword,
-		dialog:            nil,
-		passwordEntry:     passwordEntry,
+		DbPathAndPassword: dbPathAndPassword,
+		Dialog:            nil,
+		PasswordEntry:     passwordEntry,
 		formItems:         formItems,
 		parent:            parent,
 		notify:            binding.NewString(),
@@ -47,12 +47,12 @@ func (m *MasterPasswordDialog) AddListener(l binding.DataListener) {
 }
 
 func (m *MasterPasswordDialog) ShowDialog(uriID string, contentInBytes *[]byte) {
-	m.dialog = dialog.NewForm("Enter master password", "Confirm", "Cancel", m.formItems, func(valid bool) {
+	m.Dialog = dialog.NewForm("Enter master password", "Confirm", "Cancel", m.formItems, func(valid bool) {
 		if valid {
-			m.dbPathAndPassword.ContentInBytes = *contentInBytes
-			m.dbPathAndPassword.UriID = uriID
-			m.dbPathAndPassword.Password = m.passwordEntry.Text
-			m.passwordEntry.Text = ""
+			m.DbPathAndPassword.ContentInBytes = *contentInBytes
+			m.DbPathAndPassword.UriID = uriID
+			m.DbPathAndPassword.Password = m.PasswordEntry.Text
+			m.PasswordEntry.Text = ""
 			err := m.notify.Set(uniuri.New())
 			if err != nil {
 				slog.Error("Error notifying changes to listener", err)
@@ -60,6 +60,6 @@ func (m *MasterPasswordDialog) ShowDialog(uriID string, contentInBytes *[]byte) 
 		}
 	}, m.parent)
 
-	m.dialog.Resize(fyne.NewSize(400, 100))
-	m.dialog.Show()
+	m.Dialog.Resize(fyne.NewSize(400, 100))
+	m.Dialog.Show()
 }

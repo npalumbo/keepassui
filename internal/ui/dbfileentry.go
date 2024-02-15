@@ -14,8 +14,8 @@ import (
 
 type DBFileEntry struct {
 	Container      *fyne.Container
-	findFileButton *widget.Button
-	fileOpenDialog *dialog.FileDialog
+	FindFileButton *widget.Button
+	FileOpenDialog *dialog.FileDialog
 }
 
 func CreateDBFileEntry(masterPasswordDialog *MasterPasswordDialog, parent fyne.Window) DBFileEntry {
@@ -42,7 +42,7 @@ func CreateDBFileEntry(masterPasswordDialog *MasterPasswordDialog, parent fyne.W
 
 	return DBFileEntry{
 		Container:      container.NewStack(findFileButton),
-		findFileButton: findFileButton,
-		fileOpenDialog: fileOpen,
+		FindFileButton: findFileButton,
+		FileOpenDialog: fileOpen,
 	}
 }

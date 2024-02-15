@@ -1,6 +1,7 @@
-package ui
+package ui_test
 
 import (
+	"keepassui/internal/ui"
 	"testing"
 	"time"
 
@@ -12,7 +13,7 @@ import (
 func TestMasterPasswordDialog_Render(t *testing.T) {
 	w := test.NewWindow(container.NewWithoutLayout())
 	contentInBytes := make([]byte, 5)
-	masterPasswordDialog := CreateDialog(&DBPathAndPassword{}, w)
+	masterPasswordDialog := ui.CreateDialog(&ui.DBPathAndPassword{}, w)
 	w.Resize(fyne.NewSize(600, 600))
 
 	masterPasswordDialog.ShowDialog("file://path", &contentInBytes)
@@ -23,25 +24,25 @@ func TestMasterPasswordDialog_Render(t *testing.T) {
 func TestMasterPasswordDialog_fillIn_And_Submit(t *testing.T) {
 	w := test.NewWindow(container.NewWithoutLayout())
 	contentInBytes := make([]byte, 5)
-	dbPathAndPassword := &DBPathAndPassword{}
-	masterPasswordDialog := CreateDialog(dbPathAndPassword, w)
+	dbPathAndPassword := &ui.DBPathAndPassword{}
+	masterPasswordDialog := ui.CreateDialog(dbPathAndPassword, w)
 	w.Resize(fyne.NewSize(600, 600))
 
 	masterPasswordDialog.ShowDialog("file://fakeKeypassDBFilePath", &contentInBytes)
 
-	test.Type(masterPasswordDialog.passwordEntry, "thePassword")
+	test.Type(masterPasswordDialog.PasswordEntry, "thePassword")
 
-	if masterPasswordDialog.dbPathAndPassword.UriID != "" {
+	if masterPasswordDialog.DbPathAndPassword.UriID != "" {
 		t.Error("UriID from DBPathAndPassword should be empty string on start")
 	}
 
-	masterPasswordDialog.dialog.Submit()
+	masterPasswordDialog.Dialog.Submit()
 
-	if masterPasswordDialog.dbPathAndPassword.UriID == "" {
+	if masterPasswordDialog.DbPathAndPassword.UriID == "" {
 		t.Error("UriID from DBPathAndPassword should not be empty string after submit")
 	}
 
-	data := *masterPasswordDialog.dbPathAndPassword
+	data := *masterPasswordDialog.DbPathAndPassword
 	if data.UriID == "" || data.UriID != "file://fakeKeypassDBFilePath" {
 		t.Error("Expecting this URI: file://fakeKeypassDBFilePath")
 	}
@@ -53,17 +54,17 @@ func TestMasterPasswordDialog_fillIn_And_Submit(t *testing.T) {
 func TestMasterPasswordDialog_Should_Not_Show_A_Previously_Entered_Password(t *testing.T) {
 	w := test.NewWindow(container.NewWithoutLayout())
 	contentInBytes := make([]byte, 5)
-	dbPathAndPassword := &DBPathAndPassword{}
-	masterPasswordDialog := CreateDialog(dbPathAndPassword, w)
+	dbPathAndPassword := &ui.DBPathAndPassword{}
+	masterPasswordDialog := ui.CreateDialog(dbPathAndPassword, w)
 	w.Resize(fyne.NewSize(600, 600))
 
 	masterPasswordDialog.ShowDialog("file://fakeKeypassDBFilePath", &contentInBytes)
 
 	test.AssertImageMatches(t, "masterPasswordDialog_Show.png", w.Canvas().Capture())
 
-	test.Type(masterPasswordDialog.passwordEntry, "thePassword")
+	test.Type(masterPasswordDialog.PasswordEntry, "thePassword")
 
-	masterPasswordDialog.dialog.Submit()
+	masterPasswordDialog.Dialog.Submit()
 
 	// Second time ShowDialog is called it should not have the previous password
 	masterPasswordDialog.ShowDialog("file://fakeKeypassDBFilePath", &contentInBytes)
@@ -74,14 +75,14 @@ func TestMasterPasswordDialog_Should_Not_Show_A_Previously_Entered_Password(t *t
 func TestMasterPasswordDialog_Calls_Listener(t *testing.T) {
 	w := test.NewWindow(container.NewWithoutLayout())
 	contentInBytes := make([]byte, 5)
-	dbPathAndPassword := &DBPathAndPassword{}
-	masterPasswordDialog := CreateDialog(dbPathAndPassword, w)
+	dbPathAndPassword := &ui.DBPathAndPassword{}
+	masterPasswordDialog := ui.CreateDialog(dbPathAndPassword, w)
 	w.Resize(fyne.NewSize(600, 600))
 	masterPasswordDialog.ShowDialog("file://fakeKeypassDBFilePath", &contentInBytes)
 
-	test.Type(masterPasswordDialog.passwordEntry, "thePassword")
+	test.Type(masterPasswordDialog.PasswordEntry, "thePassword")
 
-	listener := &fakeListener{dataHasChangedToExpectedValues: false, dbPathAndPassword: masterPasswordDialog.dbPathAndPassword}
+	listener := &fakeListener{dataHasChangedToExpectedValues: false, dbPathAndPassword: masterPasswordDialog.DbPathAndPassword}
 
 	masterPasswordDialog.AddListener(listener)
 
@@ -89,7 +90,7 @@ func TestMasterPasswordDialog_Calls_Listener(t *testing.T) {
 		t.Error()
 	}
 
-	masterPasswordDialog.dialog.Submit()
+	masterPasswordDialog.Dialog.Submit()
 
 	time.Sleep(10 * time.Millisecond)
 
@@ -100,7 +101,7 @@ func TestMasterPasswordDialog_Calls_Listener(t *testing.T) {
 
 type fakeListener struct {
 	dataHasChangedToExpectedValues bool
-	dbPathAndPassword              *DBPathAndPassword
+	dbPathAndPassword              *ui.DBPathAndPassword
 }
 
 func (f *fakeListener) DataChanged() {

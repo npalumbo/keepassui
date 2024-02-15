@@ -1,6 +1,7 @@
-package ui
+package ui_test
 
 import (
+	"keepassui/internal/ui"
 	"testing"
 
 	"fyne.io/fyne/v2"
@@ -11,7 +12,7 @@ import (
 func TestMainContentAppStarted(t *testing.T) {
 	w := test.NewWindow(container.NewWithoutLayout())
 	app := test.NewApp()
-	mainContent := CreateMainContent(w, app.Storage())
+	mainContent := ui.CreateMainContent(w, app.Storage())
 
 	w.SetContent(mainContent.MakeUI())
 	w.Resize(fyne.NewSize(600, 600))

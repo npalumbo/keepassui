@@ -88,7 +88,13 @@ func (secretsDB *SecretsDB) AddSecretEntry(secretEntry SecretEntry) {
 	entriesByPath, ok := secretsDB.EntriesByPath[secretEntry.Group]
 	if !ok {
 		entriesByPath = []SecretEntry{}
-		secretsDB.PathsInOrder = append(secretsDB.PathsInOrder, secretEntry.Group)
+	}
+	if secretEntry.IsGroup {
+		expandedPath := append(secretEntry.Path, secretEntry.Title)
+		expandedPathInString := strings.Join(expandedPath, "|")
+		if !slices.Contains(secretsDB.PathsInOrder, expandedPathInString) {
+			secretsDB.PathsInOrder = append(secretsDB.PathsInOrder, expandedPathInString)
+		}
 	}
 	idx := slices.IndexFunc(entriesByPath, func(s SecretEntry) bool { return s.Title == secretEntry.Title })
 	if idx == -1 {
@@ -147,6 +153,7 @@ func (secretsDB SecretsDB) WriteDBBytes(masterPassword string) ([]byte, error) {
 		newGroup := gokeepasslib.NewGroup()
 		entries := secretsDB.EntriesByPath[path]
 		groupName := getLatestGroupInPath(path)
+		newGroup.Name = groupName
 		if _, ok := groupsMap[groupName]; !ok {
 			for _, secretEntry := range entries {
 				if !secretEntry.IsGroup {
@@ -157,7 +164,6 @@ func (secretsDB SecretsDB) WriteDBBytes(masterPassword string) ([]byte, error) {
 					entry.Values = append(entry.Values, mkValue("URL", secretEntry.Url))
 					entry.Values = append(entry.Values, mkValue("Notes", secretEntry.Notes))
 					newGroup.Entries = append(newGroup.Entries, entry)
-					newGroup.Name = groupName
 				}
 			}
 			groupsMap[groupName] = &newGroup

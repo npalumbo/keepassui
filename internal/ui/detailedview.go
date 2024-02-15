@@ -2,67 +2,48 @@ package ui
 
 import (
 	"keepassui/internal/keepass"
-	keepassuiwidget "keepassui/internal/widget"
+	"log/slog"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/theme"
-	"fyne.io/fyne/v2/widget"
 )
 
 type DetailedView struct {
-	titleLabel    *widget.Label
-	usernameLabel *widget.Label
-	passwordEntry *widget.Entry
-	urlLabel      *widget.Label
-	notesLabel    *widget.Label
-	detailsForm   *widget.Form
-	container     *fyne.Container
+	DefaultStager
+	secretForm        *SecretForm
+	stageManager      StageManager
+	previousStageName string
 }
 
-func (d *DetailedView) UpdateDetails(secretEntry keepass.SecretEntry) {
-	d.titleLabel.SetText(secretEntry.Title)
-	d.usernameLabel.SetText(secretEntry.Username)
-	d.passwordEntry.SetText(secretEntry.Password)
-	d.passwordEntry.Password = true
-	d.urlLabel.SetText(secretEntry.Url)
-	d.notesLabel.SetText(secretEntry.Notes)
-	d.detailsForm.Refresh()
-	d.container.Show()
+func (d *DetailedView) GetPaintedContainer() *fyne.Container {
+	return d.secretForm.FormContainer
 }
 
-func CreateDetailedView() *DetailedView {
-	passwordEntry := widget.NewPasswordEntry()
-	passwordEntry.ActionItem = keepassuiwidget.NewPasswordRevealerNotDisabled(passwordEntry)
-	passwordEntry.Disable()
+func (d *DetailedView) GetStageName() string {
+	return "DetailedView"
+}
 
-	titleLabel := widget.NewLabel("")
-	usernameLabel := widget.NewLabel("")
-	urlLabel := widget.NewLabel("")
-	notesLabel := widget.NewLabel("")
-
-	details := widget.NewForm(
-		widget.NewFormItem("Title", titleLabel),
-		widget.NewFormItem("Username", usernameLabel),
-		widget.NewFormItem("Password", passwordEntry),
-		widget.NewFormItem("Url", urlLabel),
-		widget.NewFormItem("Notes", notesLabel))
-
-	closeDetails := widget.NewButtonWithIcon("Close", theme.CancelIcon(), func() {})
-	container := container.NewVBox(widget.NewSeparator(), closeDetails, details)
-	closeDetails.OnTapped = func() {
-		container.Hide()
+func (d *DetailedView) ShowDetails(secretEntry keepass.SecretEntry) {
+	d.secretForm.UpdateForm(secretEntry)
+	err := d.stageManager.TakeOver(d.GetStageName())
+	if err != nil {
+		slog.Error(err.Error())
 	}
+}
 
-	container.Hide()
+func CreateDetailedView(previousStageName string, stageManager StageManager) DetailedView {
+	secretForm := CreateSecretForm(true)
+	secretForm.DetailsForm.OnSubmit = func() {
+		err := stageManager.TakeOver(previousStageName)
+		if err != nil {
+			slog.Error(err.Error())
+		}
+	}
+	secretForm.DetailsForm.SubmitText = "Back"
+	secretForm.DetailsForm.Refresh()
 
-	return &DetailedView{
-		titleLabel:    titleLabel,
-		usernameLabel: usernameLabel,
-		passwordEntry: passwordEntry,
-		urlLabel:      urlLabel,
-		notesLabel:    notesLabel,
-		detailsForm:   details,
-		container:     container,
+	return DetailedView{
+		stageManager:      stageManager,
+		secretForm:        &secretForm,
+		previousStageName: previousStageName,
 	}
 }

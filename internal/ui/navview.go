@@ -16,18 +16,22 @@ import (
 )
 
 type NavView struct {
-	fullContainer     *fyne.Container
-	navTop            *fyne.Container
-	saveButton        *widget.Button
-	breadCrumbs       *fyne.Container
-	generalButtons    *fyne.Container
-	listPanel         *fyne.Container
-	detailedView      *DetailedView
-	parent            fyne.Window
-	dbPathAndPassword *DBPathAndPassword
-	createReader      ToSecretReaderFn
-	currentPath       string
-	secretsDB         *keepass.SecretsDB
+	stageManager            *StageManager
+	navAndListContainer     *fyne.Container
+	navTop                  *fyne.Container
+	SaveButton              *widget.Button
+	GroupCreateButton       *widget.Button
+	SecretEntryCreateButton *widget.Button
+	breadCrumbs             *fyne.Container
+	generalButtons          *fyne.Container
+	listPanel               *fyne.Container
+	detailedView            *DetailedView
+	addEntryView            EntryUpdater
+	parent                  fyne.Window
+	dbPathAndPassword       *DBPathAndPassword
+	secretReaderResolver    SecretReaderResolver
+	currentPath             string
+	secretsDB               *keepass.SecretsDB
 }
 
 func (n *NavView) DataChanged() {
@@ -35,7 +39,7 @@ func (n *NavView) DataChanged() {
 		return
 	}
 
-	secretReader := n.createReader(*n.dbPathAndPassword)
+	secretReader := n.secretReaderResolver.GetSecretReader(*n.dbPathAndPassword)
 
 	secretsDB, err := secretReader.ReadEntriesFromContentGroupedByPath()
 
@@ -48,7 +52,7 @@ func (n *NavView) DataChanged() {
 
 	n.UpdateNavView(secretsDB.PathsInOrder[0])
 
-	n.saveButton.OnTapped = func() {
+	n.SaveButton.OnTapped = func() {
 		bytes, err := secretsDB.WriteDBBytes(n.dbPathAndPassword.Password)
 
 		if err != nil {
@@ -62,7 +66,13 @@ func (n *NavView) DataChanged() {
 		}
 	}
 
-	n.fullContainer.Show()
+	if n.stageManager != nil {
+		err := n.stageManager.TakeOver(n.GetStageName())
+		if err != nil {
+			slog.Error(err.Error())
+		}
+	}
+
 }
 
 func createFileSaveDialog(bytes []byte, originalURI string, parent fyne.Window) *dialog.FileDialog {
@@ -164,6 +174,24 @@ func (n *NavView) UpdateNavView(path string) {
 	n.listPanel.Add(list)
 	n.listPanel.Refresh()
 	n.currentPath = path
+
+	n.GroupCreateButton.OnTapped = func() {
+		groupNameEntry := widget.NewEntry()
+		groupNameEntry.Validator = createValidator("Group")
+		form := dialog.NewForm("Add new group", "Confirm", "Cancel", []*widget.FormItem{widget.NewFormItem("Name", groupNameEntry)}, func(valid bool) {
+			if valid {
+				newGroup := keepass.SecretEntry{Path: pathComponents, Group: path, Title: groupNameEntry.Text, IsGroup: true}
+				n.secretsDB.AddSecretEntry(newGroup)
+				n.UpdateNavView(path)
+			}
+		}, n.parent)
+		form.Show()
+	}
+
+	n.SecretEntryCreateButton.OnTapped = func() {
+		templateEntry := keepass.SecretEntry{Path: pathComponents, Group: path, IsGroup: false}
+		n.addEntryView.AddEntry(&templateEntry, n.secretsDB)
+	}
 }
 
 func createListNav(listOfSecretsForPath []keepass.SecretEntry, detailedView *DetailedView, parent fyne.Window, navView *NavView) (*widget.List, error) {
@@ -210,9 +238,9 @@ func createListNav(listOfSecretsForPath []keepass.SecretEntry, detailedView *Det
 				}
 			}
 
+			label.SetText(secret.Title)
 			if secret.IsGroup {
 				icon.SetResource(theme.FolderIcon())
-				label.SetText(secret.Title)
 				copyPasswordButton.Hide()
 				showInfoButton.Hide()
 				openGroupButton.OnTapped = func() {
@@ -221,12 +249,11 @@ func createListNav(listOfSecretsForPath []keepass.SecretEntry, detailedView *Det
 			} else {
 				openGroupButton.Hide()
 				icon.SetResource(theme.FileTextIcon())
-				label.SetText(secret.Title)
 				copyPasswordButton.OnTapped = func() {
 					parent.Clipboard().SetContent(secret.Password)
 				}
 				showInfoButton.OnTapped = func() {
-					detailedView.UpdateDetails(secret)
+					detailedView.ShowDetails(secret)
 				}
 
 			}
@@ -243,7 +270,7 @@ func createListNav(listOfSecretsForPath []keepass.SecretEntry, detailedView *Det
 	return newList, nil
 }
 
-func CreateNavView(dbPathAndPassword *DBPathAndPassword, detailedView *DetailedView, parent fyne.Window, createReader ToSecretReaderFn) NavView {
+func CreateNavView(dbPathAndPassword *DBPathAndPassword, addEntryView EntryUpdater, detailedView *DetailedView, parent fyne.Window, stageManager *StageManager, secretReaderResolver SecretReaderResolver) NavView {
 
 	breadCrumbs := container.NewHBox()
 	generalButtons := container.NewHBox()
@@ -253,23 +280,47 @@ func CreateNavView(dbPathAndPassword *DBPathAndPassword, detailedView *DetailedV
 	saveButton := widget.NewButtonWithIcon("save", theme.DocumentSaveIcon(), func() {
 
 	})
+	groupCreateButton := widget.NewButtonWithIcon("new group", theme.FolderNewIcon(), func() {
+
+	})
+	secretEntryCreateButton := widget.NewButtonWithIcon("new secret", theme.DocumentCreateIcon(), func() {
+
+	})
 	generalButtons.Add(saveButton)
+	generalButtons.Add(secretEntryCreateButton)
+	generalButtons.Add(groupCreateButton)
 
 	listPanel := container.NewStack()
-	fullContainer := container.NewBorder(container.NewVBox(navTop, widget.NewSeparator()), nil, nil, nil, listPanel)
-	fullContainer.Hide()
+	navAndListContainer := container.NewBorder(container.NewVBox(navTop, widget.NewSeparator()), nil, nil, nil, listPanel)
 
 	return NavView{
-		fullContainer:     fullContainer,
-		breadCrumbs:       breadCrumbs,
-		listPanel:         listPanel,
-		detailedView:      detailedView,
-		parent:            parent,
-		dbPathAndPassword: dbPathAndPassword,
-		createReader:      createReader,
-		currentPath:       "",
-		generalButtons:    generalButtons,
-		navTop:            navTop,
-		saveButton:        saveButton,
+		stageManager:            stageManager,
+		navAndListContainer:     navAndListContainer,
+		breadCrumbs:             breadCrumbs,
+		listPanel:               listPanel,
+		addEntryView:            addEntryView,
+		detailedView:            detailedView,
+		parent:                  parent,
+		dbPathAndPassword:       dbPathAndPassword,
+		secretReaderResolver:    secretReaderResolver,
+		currentPath:             "",
+		generalButtons:          generalButtons,
+		navTop:                  navTop,
+		SaveButton:              saveButton,
+		GroupCreateButton:       groupCreateButton,
+		SecretEntryCreateButton: secretEntryCreateButton,
 	}
+
+}
+
+func (n *NavView) GetPaintedContainer() *fyne.Container {
+	return n.navAndListContainer
+}
+
+func (n *NavView) GetStageName() string {
+	return "NavView"
+}
+
+func (n *NavView) ExecuteOnTakeOver() {
+	n.UpdateNavView(n.currentPath)
 }
