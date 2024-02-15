@@ -318,6 +318,6 @@ func (n *NavView) GetStageName() string {
 	return "NavView"
 }
 
-func (n *NavView) ExecuteOnResume() {
+func (n *NavView) ExecuteOnTakeOver() {
 	n.UpdateNavView(n.currentPath)
 }

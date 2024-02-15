@@ -18,7 +18,7 @@ type DefaultStager struct {
 
 type Stager interface {
 	GetPaintedContainer() *fyne.Container
-	ExecuteOnResume()
+	ExecuteOnTakeOver()
 	GetStageName() string
 }
 
@@ -39,10 +39,10 @@ func (s StageManager) TakeOver(name string) {
 	container := stager.GetPaintedContainer()
 	container.Refresh()
 	s.currentViewContainer.Add(container)
-	stager.ExecuteOnResume()
+	stager.ExecuteOnTakeOver()
 	s.currentViewContainer.Refresh()
 }
 
-func (d *DefaultStager) ExecuteOnResume() {
+func (d *DefaultStager) ExecuteOnTakeOver() {
 
 }
