@@ -27,12 +27,12 @@ func (d *DetailedView) ShowDetails(secretEntry keepass.SecretEntry) {
 }
 
 func CreateDetailedView(previousStageName string, stageManager StageManager) DetailedView {
-	secretForm := CreateForm(true)
-	secretForm.detailsForm.OnSubmit = func() {
+	secretForm := CreateSecretForm(true)
+	secretForm.DetailsForm.OnSubmit = func() {
 		stageManager.TakeOver("NavView")
 	}
-	secretForm.detailsForm.SubmitText = "Back"
-	secretForm.detailsForm.Refresh()
+	secretForm.DetailsForm.SubmitText = "Back"
+	secretForm.DetailsForm.Refresh()
 
 	return DetailedView{
 		stageManager:      stageManager,

@@ -2,11 +2,13 @@ package ui
 
 import (
 	"errors"
-	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/widget"
 	"keepassui/internal/keepass"
 	keepassuiwidget "keepassui/internal/widget"
+
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/test"
+	"fyne.io/fyne/v2/widget"
 )
 
 type SecretForm struct {
@@ -15,7 +17,7 @@ type SecretForm struct {
 	passwordEntry *widget.Entry
 	urlEntry      *widget.Entry
 	notesEntry    *widget.Entry
-	detailsForm   *widget.Form
+	DetailsForm   *widget.Form
 	FormContainer *fyne.Container
 }
 
@@ -35,7 +37,7 @@ func (f *SecretForm) UpdateForm(entry keepass.SecretEntry) {
 	f.notesEntry.Text = entry.Notes
 }
 
-func CreateForm(readOnly bool) SecretForm {
+func CreateSecretForm(readOnly bool) SecretForm {
 	titleEntry := widget.NewEntry()
 	passwordEntry := widget.NewPasswordEntry()
 	passwordEntry.ActionItem = keepassuiwidget.NewPasswordRevealerNotDisabled(passwordEntry)
@@ -75,7 +77,7 @@ func CreateForm(readOnly bool) SecretForm {
 		passwordEntry: passwordEntry,
 		urlEntry:      urlEntry,
 		notesEntry:    notesEntry,
-		detailsForm:   details,
+		DetailsForm:   details,
 		FormContainer: formContainer,
 	}
 }
@@ -87,4 +89,13 @@ func createValidator(fieldName string) fyne.StringValidator {
 		}
 		return nil
 	}
+}
+
+// Test Helper that doesn't require us to force validation
+func (f *SecretForm) TypeSecretEntryInForm(entry keepass.SecretEntry) {
+	test.Type(f.titleEntry, entry.Title)
+	test.Type(f.usernameEntry, entry.Username)
+	test.Type(f.passwordEntry, entry.Password)
+	test.Type(f.urlEntry, entry.Url)
+	test.Type(f.notesEntry, entry.Notes)
 }
