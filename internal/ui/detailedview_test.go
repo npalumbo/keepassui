@@ -1,7 +1,8 @@
-package ui
+package ui_test
 
 import (
 	"keepassui/internal/keepass"
+	"keepassui/internal/ui"
 	"testing"
 
 	"fyne.io/fyne/v2"
@@ -9,21 +10,22 @@ import (
 	"fyne.io/fyne/v2/test"
 )
 
-func TestCreateDetailedView_Hidden(t *testing.T) {
-	stageManager := CreateStageManager(container.NewStack())
-	detailedView := CreateDetailedView(stageManager)
+func TestCreateDetailedView_EmptyContent(t *testing.T) {
+	stageManager := ui.CreateStageManager(container.NewStack())
+	detailedView := ui.CreateDetailedView("", stageManager)
 	w := test.NewWindow(container.NewWithoutLayout())
-	w.SetContent(detailedView.secretForm.FormContainer)
+	w.SetContent(detailedView.GetPaintedContainer())
 
+	w.Resize(fyne.Size{Width: 300, Height: 300})
 	test.AssertImageMatches(t, "detailedView_Create.png", w.Canvas().Capture())
 }
 
-func TestUpdateDetailed_Shown(t *testing.T) {
-	stageManager := CreateStageManager(container.NewStack())
-	detailedView := CreateDetailedView(stageManager)
+func TestShowDetails_HasContent(t *testing.T) {
+	stageManager := ui.CreateStageManager(container.NewStack())
+	detailedView := ui.CreateDetailedView("", stageManager)
 	stageManager.RegisterStager(&detailedView)
 	w := test.NewWindow(container.NewWithoutLayout())
-	w.SetContent(detailedView.secretForm.FormContainer)
+	w.SetContent(detailedView.GetPaintedContainer())
 
 	secretEntry := keepass.SecretEntry{
 		Title:    "title",

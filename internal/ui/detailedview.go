@@ -8,8 +8,9 @@ import (
 
 type DetailedView struct {
 	DefaultStager
-	secretForm   *SecretForm
-	stageManager StageManager
+	secretForm        *SecretForm
+	stageManager      StageManager
+	previousStageName string
 }
 
 func (d *DetailedView) GetPaintedContainer() *fyne.Container {
@@ -25,7 +26,7 @@ func (d *DetailedView) ShowDetails(secretEntry keepass.SecretEntry) {
 	d.stageManager.TakeOver(d.GetStageName())
 }
 
-func CreateDetailedView(stageManager StageManager) DetailedView {
+func CreateDetailedView(previousStageName string, stageManager StageManager) DetailedView {
 	secretForm := CreateForm(true)
 	secretForm.detailsForm.OnSubmit = func() {
 		stageManager.TakeOver("NavView")
@@ -34,7 +35,8 @@ func CreateDetailedView(stageManager StageManager) DetailedView {
 	secretForm.detailsForm.Refresh()
 
 	return DetailedView{
-		stageManager: stageManager,
-		secretForm:   &secretForm,
+		stageManager:      stageManager,
+		secretForm:        &secretForm,
+		previousStageName: previousStageName,
 	}
 }

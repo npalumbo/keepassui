@@ -19,9 +19,9 @@ type NavView struct {
 	stageManager            *StageManager
 	navAndListContainer     *fyne.Container
 	navTop                  *fyne.Container
-	saveButton              *widget.Button
-	groupCreateButton       *widget.Button
-	secretEntryCreateButton *widget.Button
+	SaveButton              *widget.Button
+	GroupCreateButton       *widget.Button
+	SecretEntryCreateButton *widget.Button
 	breadCrumbs             *fyne.Container
 	generalButtons          *fyne.Container
 	listPanel               *fyne.Container
@@ -52,7 +52,7 @@ func (n *NavView) DataChanged() {
 
 	n.UpdateNavView(secretsDB.PathsInOrder[0])
 
-	n.saveButton.OnTapped = func() {
+	n.SaveButton.OnTapped = func() {
 		bytes, err := secretsDB.WriteDBBytes(n.dbPathAndPassword.Password)
 
 		if err != nil {
@@ -172,7 +172,7 @@ func (n *NavView) UpdateNavView(path string) {
 	n.listPanel.Refresh()
 	n.currentPath = path
 
-	n.groupCreateButton.OnTapped = func() {
+	n.GroupCreateButton.OnTapped = func() {
 		groupNameEntry := widget.NewEntry()
 		groupNameEntry.Validator = createValidator("Group")
 		form := dialog.NewForm("Add new group", "Confirm", "Cancel", []*widget.FormItem{widget.NewFormItem("Name", groupNameEntry)}, func(valid bool) {
@@ -185,7 +185,7 @@ func (n *NavView) UpdateNavView(path string) {
 		form.Show()
 	}
 
-	n.secretEntryCreateButton.OnTapped = func() {
+	n.SecretEntryCreateButton.OnTapped = func() {
 		templateEntry := keepass.SecretEntry{Path: pathComponents, Group: path, IsGroup: false}
 		n.addEntryView.AddEntry(&templateEntry, n.secretsDB)
 	}
@@ -303,9 +303,9 @@ func CreateNavView(dbPathAndPassword *DBPathAndPassword, addEntryView EntryUpdat
 		currentPath:             "",
 		generalButtons:          generalButtons,
 		navTop:                  navTop,
-		saveButton:              saveButton,
-		groupCreateButton:       groupCreateButton,
-		secretEntryCreateButton: secretEntryCreateButton,
+		SaveButton:              saveButton,
+		GroupCreateButton:       groupCreateButton,
+		SecretEntryCreateButton: secretEntryCreateButton,
 	}
 
 }

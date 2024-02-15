@@ -13,8 +13,9 @@ type EntryUpdater interface {
 
 type AddEntryView struct {
 	DefaultStager
-	secretForm   *SecretForm
-	stageManager StagerController
+	secretForm        *SecretForm
+	stageManager      StagerController
+	previousStageName string
 }
 
 func (a *AddEntryView) GetPaintedContainer() *fyne.Container {
@@ -29,21 +30,22 @@ func (a *AddEntryView) AddEntry(templateEntry *keepass.SecretEntry, secretsDB *k
 	secretForm := CreateForm(false)
 	a.secretForm = &secretForm
 	secretForm.detailsForm.OnCancel = func() {
-		a.stageManager.TakeOver("NavView")
+		a.stageManager.TakeOver(a.previousStageName)
 	}
 	secretForm.detailsForm.Refresh()
 	secretForm.detailsForm.OnSubmit = func() {
 		secretForm.UpdateEntry(templateEntry)
 		secretsDB.AddSecretEntry(*templateEntry)
-		a.stageManager.TakeOver("NavView")
+		a.stageManager.TakeOver(a.previousStageName)
 	}
 	a.stageManager.TakeOver(a.GetStageName())
 }
 
-func CreateAddEntryView(stageManager StagerController) AddEntryView {
+func CreateAddEntryView(previousStageName string, stageManager StagerController) AddEntryView {
 
 	return AddEntryView{
-		secretForm:   nil,
-		stageManager: stageManager,
+		secretForm:        nil,
+		stageManager:      stageManager,
+		previousStageName: previousStageName,
 	}
 }
