@@ -19,15 +19,15 @@ type MockedSecretReaderFactory struct {
 	mockedSecretReader secretsreader.SecretReader
 }
 
-func (m MockedSecretReaderFactory) GetSecretReader(d ui.DBPathAndPassword) secretsreader.SecretReader {
+func (m MockedSecretReaderFactory) GetSecretReader(d secretsreader.DBPathAndPassword) secretsreader.SecretReader {
 	return m.mockedSecretReader
 }
 
 func TestNavView_DataChanged_Does_Nothing_When_DBPathAndPassword_is_EmptyObject(t *testing.T) {
-	dbPathAndPassword := &ui.DBPathAndPassword{}
+	dbPathAndPassword := &secretsreader.DBPathAndPassword{}
 	w := test.NewWindow(container.NewWithoutLayout())
 
-	navView := ui.CreateNavView(dbPathAndPassword, nil, nil, w, nil, nil)
+	navView := ui.CreateNavView(dbPathAndPassword, nil, nil, w, nil)
 
 	navView.DataChanged()
 
@@ -42,12 +42,11 @@ func TestNavView_DataChanged_Shows_Error_Error_Reading_secrets(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	dbPathAndPassword := &ui.DBPathAndPassword{UriID: "path", Password: "password", ContentInBytes: []byte{}}
-
 	secretReader := mock_secretsreader.NewMockSecretReader(mockCtrl)
 	secretReader.EXPECT().ReadEntriesFromContentGroupedByPath().Times(1).Return(secretsdb.SecretsDB{}, errors.New("Fake Error"))
+	secretReader.EXPECT().GetUriID().Times(1).Return("path")
 
-	navView := ui.CreateNavView(dbPathAndPassword, nil, nil, w, nil, MockedSecretReaderFactory{mockedSecretReader: secretReader})
+	navView := ui.CreateNavView(secretReader, nil, nil, w, nil)
 
 	navView.DataChanged()
 
@@ -62,16 +61,15 @@ func TestNavView_DataChanged(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	dbPathAndPassword := &ui.DBPathAndPassword{UriID: "path", Password: "password", ContentInBytes: []byte{}}
-
 	secretReader := mock_secretsreader.NewMockSecretReader(mockCtrl)
 
 	secretReader.EXPECT().ReadEntriesFromContentGroupedByPath().Times(1).Return(
 		secretsDBForTesting(),
 		nil,
 	)
+	secretReader.EXPECT().GetUriID().Times(1).Return("path")
 
-	navView := ui.CreateNavView(dbPathAndPassword, nil, nil, w, nil, MockedSecretReaderFactory{mockedSecretReader: secretReader})
+	navView := ui.CreateNavView(secretReader, nil, nil, w, nil)
 
 	navView.DataChanged()
 	w.SetContent(navView.GetPaintedContainer())
@@ -84,16 +82,15 @@ func TestNavView_DataChanged_two_groups(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	dbPathAndPassword := &ui.DBPathAndPassword{UriID: "path", Password: "password", ContentInBytes: []byte{}}
-
 	secretReader := mock_secretsreader.NewMockSecretReader(mockCtrl)
 
 	secretReader.EXPECT().ReadEntriesFromContentGroupedByPath().Times(1).Return(
 		secretsDBWithTwoGroups(),
 		nil,
 	)
+	secretReader.EXPECT().GetUriID().Times(1).Return("path")
 
-	navView := ui.CreateNavView(dbPathAndPassword, nil, nil, w, nil, MockedSecretReaderFactory{mockedSecretReader: secretReader})
+	navView := ui.CreateNavView(secretReader, nil, nil, w, nil)
 
 	navView.DataChanged()
 	w.SetContent(navView.GetPaintedContainer())
@@ -106,16 +103,15 @@ func TestNavView_NavigateToNestedFolder(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	dbPathAndPassword := &ui.DBPathAndPassword{UriID: "path", Password: "password", ContentInBytes: []byte{}}
-
 	secretReader := mock_secretsreader.NewMockSecretReader(mockCtrl)
 
 	secretReader.EXPECT().ReadEntriesFromContentGroupedByPath().Times(1).Return(
 		secretsDBWithTwoGroups(),
 		nil,
 	)
+	secretReader.EXPECT().GetUriID().Times(1).Return("path")
 
-	navView := ui.CreateNavView(dbPathAndPassword, nil, nil, w, nil, MockedSecretReaderFactory{mockedSecretReader: secretReader})
+	navView := ui.CreateNavView(secretReader, nil, nil, w, nil)
 
 	navView.DataChanged()
 	w.SetContent(navView.GetPaintedContainer())
@@ -134,8 +130,6 @@ func TestNavView_DeleteFirstEntry(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	dbPathAndPassword := &ui.DBPathAndPassword{UriID: "path", Password: "password", ContentInBytes: []byte{}}
-
 	secretReader := mock_secretsreader.NewMockSecretReader(mockCtrl)
 
 	secretsDBWithTwoGroups := secretsDBWithTwoGroups()
@@ -143,7 +137,8 @@ func TestNavView_DeleteFirstEntry(t *testing.T) {
 		secretsDBWithTwoGroups,
 		nil,
 	)
-	navView := ui.CreateNavView(dbPathAndPassword, nil, nil, w, nil, MockedSecretReaderFactory{mockedSecretReader: secretReader})
+	secretReader.EXPECT().GetUriID().Times(1).Return("path")
+	navView := ui.CreateNavView(secretReader, nil, nil, w, nil)
 
 	navView.DataChanged()
 	w.SetContent(navView.GetPaintedContainer())
@@ -166,8 +161,6 @@ func TestNavView_TapSaveButtonOpensSaveDialog(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	dbPathAndPassword := &ui.DBPathAndPassword{UriID: "file://path", Password: "password", ContentInBytes: []byte{}}
-
 	secretReader := mock_secretsreader.NewMockSecretReader(mockCtrl)
 
 	secretsDBWithTwoGroups := secretsDBWithTwoGroups()
@@ -175,8 +168,10 @@ func TestNavView_TapSaveButtonOpensSaveDialog(t *testing.T) {
 		secretsDBWithTwoGroups,
 		nil,
 	)
+	secretReader.EXPECT().GetUriID().Times(2).Return("file://path")
+	secretReader.EXPECT().GetPassword().Times(1).Return("password")
 
-	navView := ui.CreateNavView(dbPathAndPassword, nil, nil, w, nil, MockedSecretReaderFactory{mockedSecretReader: secretReader})
+	navView := ui.CreateNavView(secretReader, nil, nil, w, nil)
 
 	navView.DataChanged()
 
@@ -195,8 +190,6 @@ func TestNavView_TapOnNewGroupOpensNewGroupDialog(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	dbPathAndPassword := &ui.DBPathAndPassword{UriID: "file://path", Password: "password", ContentInBytes: []byte{}}
-
 	secretReader := mock_secretsreader.NewMockSecretReader(mockCtrl)
 
 	secretsDBWithTwoGroups := secretsDBWithTwoGroups()
@@ -204,8 +197,9 @@ func TestNavView_TapOnNewGroupOpensNewGroupDialog(t *testing.T) {
 		secretsDBWithTwoGroups,
 		nil,
 	)
+	secretReader.EXPECT().GetUriID().Times(1).Return("file://path")
 
-	navView := ui.CreateNavView(dbPathAndPassword, nil, nil, w, nil, MockedSecretReaderFactory{mockedSecretReader: secretReader})
+	navView := ui.CreateNavView(secretReader, nil, nil, w, nil)
 
 	navView.DataChanged()
 
@@ -224,8 +218,6 @@ func TestNavView_TapOnNewSecretCallsAddEntry(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	dbPathAndPassword := &ui.DBPathAndPassword{UriID: "file://path", Password: "password", ContentInBytes: []byte{}}
-
 	secretReader := mock_secretsreader.NewMockSecretReader(mockCtrl)
 
 	secretsDBWithTwoGroups := secretsDBWithTwoGroups()
@@ -233,6 +225,7 @@ func TestNavView_TapOnNewSecretCallsAddEntry(t *testing.T) {
 		secretsDBWithTwoGroups,
 		nil,
 	)
+	secretReader.EXPECT().GetUriID().Times(1).Return("file://path")
 
 	entryUpdater := mocks_ui.NewMockEntryUpdater(mockCtrl)
 
@@ -240,7 +233,7 @@ func TestNavView_TapOnNewSecretCallsAddEntry(t *testing.T) {
 
 	entryUpdater.EXPECT().AddEntry(&templateSecret, &secretsDBWithTwoGroups).Times(1)
 
-	navView := ui.CreateNavView(dbPathAndPassword, entryUpdater, nil, w, nil, MockedSecretReaderFactory{mockedSecretReader: secretReader})
+	navView := ui.CreateNavView(secretReader, entryUpdater, nil, w, nil)
 
 	navView.DataChanged()
 

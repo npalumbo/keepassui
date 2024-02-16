@@ -15,32 +15,19 @@ type MainContent struct {
 	stageManager         StageManager
 }
 
-type SecretReaderResolver interface {
-	GetSecretReader(d DBPathAndPassword) secretsreader.SecretReader
-}
-
-type SecretReaderFactory struct {
-}
-
-var DefaultSecretReaderFactory SecretReaderFactory = SecretReaderFactory{}
-
-func (s SecretReaderFactory) GetSecretReader(d DBPathAndPassword) secretsreader.SecretReader {
-	return secretsreader.CipheredKeepassDB{DBBytes: d.ContentInBytes, Password: d.Password, UriID: d.UriID}
-}
-
 func (m *MainContent) MakeUI() fyne.CanvasObject {
 	return container.NewStack(container.NewBorder(m.DBFileEntry.Container, nil, nil, nil, m.stageManager.currentViewContainer))
 }
 
 func CreateMainContent(parent fyne.Window, stor fyne.Storage) MainContent {
-	dbPathAndPassword := &DBPathAndPassword{}
+	dbPathAndPassword := &secretsreader.DBPathAndPassword{}
 	masterPasswordDialog := CreateDialog(dbPathAndPassword, parent)
 	dbFileEntry := CreateDBFileEntry(&masterPasswordDialog, parent)
 	currentContainer := container.NewStack()
 	stageManager := CreateStageManager(currentContainer)
 	detailedView := CreateDetailedView("NavView", stageManager)
 	addEntryView := CreateAddEntryView("NavView", stageManager)
-	navView := CreateNavView(dbPathAndPassword, &addEntryView, &detailedView, parent, &stageManager, DefaultSecretReaderFactory)
+	navView := CreateNavView(dbPathAndPassword, &addEntryView, &detailedView, parent, &stageManager)
 
 	stageManager.RegisterStager(&navView)
 	stageManager.RegisterStager(&addEntryView)

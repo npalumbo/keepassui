@@ -3,6 +3,7 @@ package ui
 import (
 	"errors"
 	"keepassui/internal/secretsdb"
+	"keepassui/internal/secretsreader"
 	"log/slog"
 	"strings"
 
@@ -28,20 +29,17 @@ type NavView struct {
 	detailedView            *DetailedView
 	addEntryView            EntryUpdater
 	parent                  fyne.Window
-	dbPathAndPassword       *DBPathAndPassword
-	secretReaderResolver    SecretReaderResolver
+	dbPathAndPassword       secretsreader.SecretReader
 	currentPath             string
 	secretsDB               *secretsdb.SecretsDB
 }
 
 func (n *NavView) DataChanged() {
-	if n.dbPathAndPassword.UriID == "" {
+	if n.dbPathAndPassword.GetUriID() == "" {
 		return
 	}
 
-	secretReader := n.secretReaderResolver.GetSecretReader(*n.dbPathAndPassword)
-
-	secretsDB, err := secretReader.ReadEntriesFromContentGroupedByPath()
+	secretsDB, err := n.dbPathAndPassword.ReadEntriesFromContentGroupedByPath()
 
 	if err != nil {
 		dialog.ShowError(errors.New("Error reading secrets: "+err.Error()), n.parent)
@@ -53,13 +51,13 @@ func (n *NavView) DataChanged() {
 	n.UpdateNavView(secretsDB.PathsInOrder[0])
 
 	n.SaveButton.OnTapped = func() {
-		bytes, err := secretsDB.WriteDBBytes(n.dbPathAndPassword.Password)
+		bytes, err := secretsDB.WriteDBBytes(n.dbPathAndPassword.GetPassword())
 
 		if err != nil {
 			dialog.ShowError(err, n.parent)
 			return
 		}
-		fileSaveDialog := createFileSaveDialog(bytes, n.dbPathAndPassword.UriID, n.parent)
+		fileSaveDialog := createFileSaveDialog(bytes, n.dbPathAndPassword.GetUriID(), n.parent)
 
 		if fileSaveDialog != nil {
 			fileSaveDialog.Show()
@@ -272,7 +270,7 @@ func createListNav(listOfSecretsForPath []secretsdb.SecretEntry, detailedView *D
 	return newList, nil
 }
 
-func CreateNavView(dbPathAndPassword *DBPathAndPassword, addEntryView EntryUpdater, detailedView *DetailedView, parent fyne.Window, stageManager *StageManager, secretReaderResolver SecretReaderResolver) NavView {
+func CreateNavView(dbPathAndPassword secretsreader.SecretReader, addEntryView EntryUpdater, detailedView *DetailedView, parent fyne.Window, stageManager *StageManager) NavView {
 
 	breadCrumbs := container.NewHBox()
 	generalButtons := container.NewHBox()
@@ -304,7 +302,6 @@ func CreateNavView(dbPathAndPassword *DBPathAndPassword, addEntryView EntryUpdat
 		detailedView:            detailedView,
 		parent:                  parent,
 		dbPathAndPassword:       dbPathAndPassword,
-		secretReaderResolver:    secretReaderResolver,
 		currentPath:             "",
 		generalButtons:          generalButtons,
 		navTop:                  navTop,

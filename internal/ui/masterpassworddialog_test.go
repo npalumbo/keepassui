@@ -1,6 +1,7 @@
 package ui_test
 
 import (
+	"keepassui/internal/secretsreader"
 	"keepassui/internal/ui"
 	"testing"
 	"time"
@@ -13,7 +14,7 @@ import (
 func TestMasterPasswordDialog_Render(t *testing.T) {
 	w := test.NewWindow(container.NewWithoutLayout())
 	contentInBytes := make([]byte, 5)
-	masterPasswordDialog := ui.CreateDialog(&ui.DBPathAndPassword{}, w)
+	masterPasswordDialog := ui.CreateDialog(&secretsreader.DBPathAndPassword{}, w)
 	w.Resize(fyne.NewSize(600, 600))
 
 	masterPasswordDialog.ShowDialog("file://path", &contentInBytes)
@@ -24,7 +25,7 @@ func TestMasterPasswordDialog_Render(t *testing.T) {
 func TestMasterPasswordDialog_fillIn_And_Submit(t *testing.T) {
 	w := test.NewWindow(container.NewWithoutLayout())
 	contentInBytes := make([]byte, 5)
-	dbPathAndPassword := &ui.DBPathAndPassword{}
+	dbPathAndPassword := &secretsreader.DBPathAndPassword{}
 	masterPasswordDialog := ui.CreateDialog(dbPathAndPassword, w)
 	w.Resize(fyne.NewSize(600, 600))
 
@@ -54,7 +55,7 @@ func TestMasterPasswordDialog_fillIn_And_Submit(t *testing.T) {
 func TestMasterPasswordDialog_Should_Not_Show_A_Previously_Entered_Password(t *testing.T) {
 	w := test.NewWindow(container.NewWithoutLayout())
 	contentInBytes := make([]byte, 5)
-	dbPathAndPassword := &ui.DBPathAndPassword{}
+	dbPathAndPassword := &secretsreader.DBPathAndPassword{}
 	masterPasswordDialog := ui.CreateDialog(dbPathAndPassword, w)
 	w.Resize(fyne.NewSize(600, 600))
 
@@ -75,7 +76,7 @@ func TestMasterPasswordDialog_Should_Not_Show_A_Previously_Entered_Password(t *t
 func TestMasterPasswordDialog_Calls_Listener(t *testing.T) {
 	w := test.NewWindow(container.NewWithoutLayout())
 	contentInBytes := make([]byte, 5)
-	dbPathAndPassword := &ui.DBPathAndPassword{}
+	dbPathAndPassword := &secretsreader.DBPathAndPassword{}
 	masterPasswordDialog := ui.CreateDialog(dbPathAndPassword, w)
 	w.Resize(fyne.NewSize(600, 600))
 	masterPasswordDialog.ShowDialog("file://fakeKeypassDBFilePath", &contentInBytes)
@@ -101,7 +102,7 @@ func TestMasterPasswordDialog_Calls_Listener(t *testing.T) {
 
 type fakeListener struct {
 	dataHasChangedToExpectedValues bool
-	dbPathAndPassword              *ui.DBPathAndPassword
+	dbPathAndPassword              *secretsreader.DBPathAndPassword
 }
 
 func (f *fakeListener) DataChanged() {

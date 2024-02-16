@@ -39,6 +39,48 @@ func (m *MockSecretReader) EXPECT() *MockSecretReaderMockRecorder {
 	return m.recorder
 }
 
+// GetContentInBytes mocks base method.
+func (m *MockSecretReader) GetContentInBytes() []byte {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetContentInBytes")
+	ret0, _ := ret[0].([]byte)
+	return ret0
+}
+
+// GetContentInBytes indicates an expected call of GetContentInBytes.
+func (mr *MockSecretReaderMockRecorder) GetContentInBytes() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetContentInBytes", reflect.TypeOf((*MockSecretReader)(nil).GetContentInBytes))
+}
+
+// GetPassword mocks base method.
+func (m *MockSecretReader) GetPassword() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPassword")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// GetPassword indicates an expected call of GetPassword.
+func (mr *MockSecretReaderMockRecorder) GetPassword() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPassword", reflect.TypeOf((*MockSecretReader)(nil).GetPassword))
+}
+
+// GetUriID mocks base method.
+func (m *MockSecretReader) GetUriID() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUriID")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// GetUriID indicates an expected call of GetUriID.
+func (mr *MockSecretReaderMockRecorder) GetUriID() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUriID", reflect.TypeOf((*MockSecretReader)(nil).GetUriID))
+}
+
 // ReadEntriesFromContentGroupedByPath mocks base method.
 func (m *MockSecretReader) ReadEntriesFromContentGroupedByPath() (secretsdb.SecretsDB, error) {
 	m.ctrl.T.Helper()

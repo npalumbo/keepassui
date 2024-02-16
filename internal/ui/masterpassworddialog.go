@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"keepassui/internal/secretsreader"
 	"log/slog"
 
 	"fyne.io/fyne/v2"
@@ -11,7 +12,7 @@ import (
 )
 
 type MasterPasswordDialog struct {
-	DbPathAndPassword *DBPathAndPassword
+	DbPathAndPassword *secretsreader.DBPathAndPassword
 	Dialog            *dialog.FormDialog
 	PasswordEntry     *widget.Entry
 	formItems         []*widget.FormItem
@@ -19,13 +20,7 @@ type MasterPasswordDialog struct {
 	notify            binding.String
 }
 
-type DBPathAndPassword struct {
-	UriID          string
-	ContentInBytes []byte
-	Password       string
-}
-
-func CreateDialog(dbPathAndPassword *DBPathAndPassword, parent fyne.Window) MasterPasswordDialog {
+func CreateDialog(dbPathAndPassword *secretsreader.DBPathAndPassword, parent fyne.Window) MasterPasswordDialog {
 	formItems := []*widget.FormItem{}
 	passwordEntry := widget.NewPasswordEntry()
 	passwordEntry.SetPlaceHolder("KeyPass DB password")
