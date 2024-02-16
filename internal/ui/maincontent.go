@@ -1,7 +1,7 @@
 package ui
 
 import (
-	"keepassui/internal/keepass"
+	"keepassui/internal/secretsreader"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -16,7 +16,7 @@ type MainContent struct {
 }
 
 type SecretReaderResolver interface {
-	GetSecretReader(d DBPathAndPassword) keepass.SecretReader
+	GetSecretReader(d DBPathAndPassword) secretsreader.SecretReader
 }
 
 type SecretReaderFactory struct {
@@ -24,8 +24,8 @@ type SecretReaderFactory struct {
 
 var DefaultSecretReaderFactory SecretReaderFactory = SecretReaderFactory{}
 
-func (s SecretReaderFactory) GetSecretReader(d DBPathAndPassword) keepass.SecretReader {
-	return keepass.CipheredKeepassDB{DBBytes: d.ContentInBytes, Password: d.Password, UriID: d.UriID}
+func (s SecretReaderFactory) GetSecretReader(d DBPathAndPassword) secretsreader.SecretReader {
+	return secretsreader.CipheredKeepassDB{DBBytes: d.ContentInBytes, Password: d.Password, UriID: d.UriID}
 }
 
 func (m *MainContent) MakeUI() fyne.CanvasObject {

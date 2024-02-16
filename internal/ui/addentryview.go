@@ -1,7 +1,7 @@
 package ui
 
 import (
-	"keepassui/internal/keepass"
+	"keepassui/internal/secretsdb"
 	"log/slog"
 
 	"fyne.io/fyne/v2"
@@ -9,7 +9,8 @@ import (
 
 //go:generate mockgen -destination=../mocks/ui/mock_addentryview.go -source=./addentryview.go
 type EntryUpdater interface {
-	AddEntry(templateEntry *keepass.SecretEntry, secretsDB *keepass.SecretsDB)
+	AddEntry(templateEntry *secretsdb.SecretEntry, secretsDB *secretsdb.SecretsDB)
+	ModifyEntry(templateEntry *secretsdb.SecretEntry)
 }
 
 type AddEntryView struct {
@@ -27,8 +28,13 @@ func (a *AddEntryView) GetStageName() string {
 	return "AddEntry"
 }
 
-func (a *AddEntryView) AddEntry(templateEntry *keepass.SecretEntry, secretsDB *keepass.SecretsDB) {
+func (a *AddEntryView) AddEntry(templateEntry *secretsdb.SecretEntry, secretsDB *secretsdb.SecretsDB) {
+	addOrModify(a, templateEntry, secretsDB)
+}
+
+func addOrModify(a *AddEntryView, templateEntry *secretsdb.SecretEntry, secretsDB *secretsdb.SecretsDB) {
 	secretForm := CreateSecretForm(false)
+	secretForm.UpdateForm(*templateEntry)
 	a.SecretForm = &secretForm
 	secretForm.DetailsForm.OnCancel = func() {
 		err := a.stageManager.TakeOver(a.previousStageName)
@@ -39,7 +45,9 @@ func (a *AddEntryView) AddEntry(templateEntry *keepass.SecretEntry, secretsDB *k
 	secretForm.DetailsForm.Refresh()
 	secretForm.DetailsForm.OnSubmit = func() {
 		secretForm.UpdateEntry(templateEntry)
-		secretsDB.AddSecretEntry(*templateEntry)
+		if secretsDB != nil {
+			secretsDB.AddSecretEntry(*templateEntry)
+		}
 		err := a.stageManager.TakeOver(a.previousStageName)
 		if err != nil {
 			slog.Error(err.Error())
@@ -49,6 +57,10 @@ func (a *AddEntryView) AddEntry(templateEntry *keepass.SecretEntry, secretsDB *k
 	if err != nil {
 		slog.Error(err.Error())
 	}
+}
+
+func (a *AddEntryView) ModifyEntry(templateEntry *secretsdb.SecretEntry) {
+	addOrModify(a, templateEntry, nil)
 }
 
 func CreateAddEntryView(previousStageName string, stageManager StagerController) AddEntryView {

@@ -1,7 +1,7 @@
 package ui
 
 import (
-	"keepassui/internal/keepass"
+	"keepassui/internal/secretsdb"
 	"log/slog"
 
 	"fyne.io/fyne/v2"
@@ -22,7 +22,7 @@ func (d *DetailedView) GetStageName() string {
 	return "DetailedView"
 }
 
-func (d *DetailedView) ShowDetails(secretEntry keepass.SecretEntry) {
+func (d *DetailedView) ShowDetails(secretEntry secretsdb.SecretEntry) {
 	d.secretForm.UpdateForm(secretEntry)
 	err := d.stageManager.TakeOver(d.GetStageName())
 	if err != nil {

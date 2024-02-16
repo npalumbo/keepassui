@@ -1,6 +1,4 @@
-package keepass
-
-//go:generate mockgen -destination=../mocks/keepass/mock_keepass.go -source=./keepass.go
+package secretsdb
 
 import (
 	"bytes"
@@ -27,18 +25,8 @@ type SecretsDB struct {
 	PathsInOrder  []string
 }
 
-type CipheredKeepassDB struct {
-	DBBytes  []byte
-	Password string
-	UriID    string
-}
-
-type SecretReader interface {
-	ReadEntriesFromContentGroupedByPath() (SecretsDB, error)
-}
-
-func (ckdb CipheredKeepassDB) ReadEntriesFromContentGroupedByPath() (SecretsDB, error) {
-	secrets, err := ckdb.readEntriesFromContent()
+func ReadSecretsDBFromDBBytes(payload []byte, password string) (SecretsDB, error) {
+	secrets, err := readEntriesFromContent(payload, password)
 
 	if err != nil {
 		return SecretsDB{}, err
@@ -47,11 +35,11 @@ func (ckdb CipheredKeepassDB) ReadEntriesFromContentGroupedByPath() (SecretsDB, 
 	return groupSecrets(secrets), nil
 }
 
-func (ckdb CipheredKeepassDB) readEntriesFromContent() ([]SecretEntry, error) {
-	reader := bytes.NewReader(ckdb.DBBytes)
+func readEntriesFromContent(payload []byte, password string) ([]SecretEntry, error) {
+	reader := bytes.NewReader(payload)
 
 	db := gokeepasslib.NewDatabase()
-	db.Credentials = gokeepasslib.NewPasswordCredentials(ckdb.Password)
+	db.Credentials = gokeepasslib.NewPasswordCredentials(password)
 	err := gokeepasslib.NewDecoder(reader).Decode(db)
 
 	if err != nil {
@@ -73,14 +61,48 @@ func (ckdb CipheredKeepassDB) readEntriesFromContent() ([]SecretEntry, error) {
 	return secrets, nil
 }
 
-func mkValue(key string, value string) gokeepasslib.ValueData {
-	return gokeepasslib.ValueData{Key: key, Value: gokeepasslib.V{Content: value}}
+func extractEntries(groupPath []string, groupToScan gokeepasslib.Group, secrets []SecretEntry) []SecretEntry {
+	for _, entry := range groupToScan.Entries {
+		outputEntry := SecretEntry{Title: entry.GetTitle(), Password: entry.GetPassword(), Group: groupToScan.Name}
+		for _, value := range entry.Values {
+			if value.Key == "UserName" {
+				outputEntry.Username = value.Value.Content
+			}
+			if value.Key == "Notes" {
+				outputEntry.Notes = value.Value.Content
+			}
+			if value.Key == "URL" {
+				outputEntry.Url = value.Value.Content
+			}
+
+			outputEntry.Path = append(groupPath, groupToScan.Name)
+			outputEntry.Group = strings.Join(outputEntry.Path, "|")
+
+		}
+		secrets = append(secrets, outputEntry)
+	}
+
+	for _, group := range groupToScan.Groups {
+		expandedPath := append(groupPath, groupToScan.Name)
+		secrets = extractEntries(expandedPath, group, secrets)
+		secrets = append(secrets, SecretEntry{Title: group.Name, Path: expandedPath, Group: strings.Join(expandedPath, "|"), IsGroup: true})
+	}
+	return secrets
 }
 
-func mkProtectedValue(key string, value string) gokeepasslib.ValueData {
-	return gokeepasslib.ValueData{
-		Key:   key,
-		Value: gokeepasslib.V{Content: value, Protected: w.NewBoolWrapper(true)},
+func groupSecrets(secrets []SecretEntry) SecretsDB {
+	secretsGroupedByPath := make(map[string][]SecretEntry)
+	pathsInOrder := []string{}
+
+	for _, p := range secrets {
+		secretsGroupedByPath[p.Group] = append(secretsGroupedByPath[p.Group], p)
+		if !slices.Contains(pathsInOrder, p.Group) {
+			pathsInOrder = append(pathsInOrder, p.Group)
+		}
+	}
+	return SecretsDB{
+		EntriesByPath: secretsGroupedByPath,
+		PathsInOrder:  pathsInOrder,
 	}
 }
 
@@ -225,48 +247,14 @@ func (secretsDB SecretsDB) WriteDBBytes(masterPassword string) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func extractEntries(groupPath []string, groupToScan gokeepasslib.Group, secrets []SecretEntry) []SecretEntry {
-	for _, entry := range groupToScan.Entries {
-		outputEntry := SecretEntry{Title: entry.GetTitle(), Password: entry.GetPassword(), Group: groupToScan.Name}
-		for _, value := range entry.Values {
-			if value.Key == "UserName" {
-				outputEntry.Username = value.Value.Content
-			}
-			if value.Key == "Notes" {
-				outputEntry.Notes = value.Value.Content
-			}
-			if value.Key == "URL" {
-				outputEntry.Url = value.Value.Content
-			}
-
-			outputEntry.Path = append(groupPath, groupToScan.Name)
-			outputEntry.Group = strings.Join(outputEntry.Path, "|")
-
-		}
-		secrets = append(secrets, outputEntry)
-	}
-
-	for _, group := range groupToScan.Groups {
-		expandedPath := append(groupPath, groupToScan.Name)
-		secrets = extractEntries(expandedPath, group, secrets)
-		secrets = append(secrets, SecretEntry{Title: group.Name, Path: expandedPath, Group: strings.Join(expandedPath, "|"), IsGroup: true})
-	}
-	return secrets
+func mkValue(key string, value string) gokeepasslib.ValueData {
+	return gokeepasslib.ValueData{Key: key, Value: gokeepasslib.V{Content: value}}
 }
 
-func groupSecrets(secrets []SecretEntry) SecretsDB {
-	secretsGroupedByPath := make(map[string][]SecretEntry)
-	pathsInOrder := []string{}
-
-	for _, p := range secrets {
-		secretsGroupedByPath[p.Group] = append(secretsGroupedByPath[p.Group], p)
-		if !slices.Contains(pathsInOrder, p.Group) {
-			pathsInOrder = append(pathsInOrder, p.Group)
-		}
-	}
-	return SecretsDB{
-		EntriesByPath: secretsGroupedByPath,
-		PathsInOrder:  pathsInOrder,
+func mkProtectedValue(key string, value string) gokeepasslib.ValueData {
+	return gokeepasslib.ValueData{
+		Key:   key,
+		Value: gokeepasslib.V{Content: value, Protected: w.NewBoolWrapper(true)},
 	}
 }
 

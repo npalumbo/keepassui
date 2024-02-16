@@ -1,7 +1,7 @@
 package ui_test
 
 import (
-	"keepassui/internal/keepass"
+	"keepassui/internal/secretsdb"
 	"keepassui/internal/ui"
 	"testing"
 
@@ -31,7 +31,7 @@ func TestCreateSecretFormNotReadOnlyFormShowsEnabledEntries(t *testing.T) {
 func TestUpdateForm_Shows_Populated_Form_Fields(t *testing.T) {
 	secretForm := ui.CreateSecretForm(false)
 
-	secretForm.TypeSecretEntryInForm(keepass.SecretEntry{
+	secretForm.TypeSecretEntryInForm(secretsdb.SecretEntry{
 		Title:    "aTitle",
 		Username: "aUsername",
 		Password: "aPassword",
@@ -49,7 +49,7 @@ func TestUpdateForm_Shows_Populated_Form_Fields(t *testing.T) {
 func TestUpdateEntry_Populates_SecretEntry(t *testing.T) {
 	secretForm := ui.CreateSecretForm(false)
 
-	secretForm.TypeSecretEntryInForm(keepass.SecretEntry{
+	secretForm.TypeSecretEntryInForm(secretsdb.SecretEntry{
 		Title:    "aTitle",
 		Username: "aUsername",
 		Password: "aPassword",
@@ -57,7 +57,7 @@ func TestUpdateEntry_Populates_SecretEntry(t *testing.T) {
 		Notes:    "someNotes",
 	})
 
-	secretEntry := keepass.SecretEntry{}
+	secretEntry := secretsdb.SecretEntry{}
 
 	secretForm.UpdateEntry(&secretEntry)
 

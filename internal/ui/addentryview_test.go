@@ -1,8 +1,8 @@
 package ui_test
 
 import (
-	"keepassui/internal/keepass"
 	mocks_ui "keepassui/internal/mocks/ui"
+	"keepassui/internal/secretsdb"
 	"keepassui/internal/ui"
 	"slices"
 	"testing"
@@ -21,7 +21,7 @@ func TestAddEntryShowsDisabledConfirmButtonWhenNotFullyPopulated(t *testing.T) {
 	stagerController := mocks_ui.NewMockStagerController(mockCtrl)
 	addEntryView := ui.CreateAddEntryView("prevousScreen", stagerController)
 
-	templateSecret := keepass.SecretEntry{Path: []string{"path 1"}, Group: "path 1", IsGroup: false}
+	templateSecret := secretsdb.SecretEntry{Path: []string{"path 1"}, Group: "path 1", IsGroup: false}
 	stagerController.EXPECT().TakeOver("AddEntry").Times(1).Return(nil)
 
 	secretsDB := secretsDBForTesting()
@@ -44,7 +44,7 @@ func TestAddEntryTapOnCancelTakesUsToThePreviousScreenWithoutChangingSecretsDB(t
 	stagerController := mocks_ui.NewMockStagerController(mockCtrl)
 	addEntryView := ui.CreateAddEntryView("previousScreen", stagerController)
 
-	templateSecret := keepass.SecretEntry{Path: []string{"path 1"}, Group: "path 1", IsGroup: false}
+	templateSecret := secretsdb.SecretEntry{Path: []string{"path 1"}, Group: "path 1", IsGroup: false}
 	stagerController.EXPECT().TakeOver("AddEntry").Times(1).Return(nil)
 
 	secretsDB := secretsDBForTesting()
@@ -66,7 +66,7 @@ func TestAddEntryShowsEnabledConfirmButtonWhenFullyPopulated(t *testing.T) {
 	stagerController := mocks_ui.NewMockStagerController(mockCtrl)
 	addEntryView := ui.CreateAddEntryView("prevousScreen", stagerController)
 
-	templateSecret := keepass.SecretEntry{
+	templateSecret := secretsdb.SecretEntry{
 		Path: []string{"path 1"}, Group: "path 1", IsGroup: false,
 	}
 	stagerController.EXPECT().TakeOver("AddEntry").Times(1).Return(nil)
@@ -75,7 +75,7 @@ func TestAddEntryShowsEnabledConfirmButtonWhenFullyPopulated(t *testing.T) {
 
 	addEntryView.AddEntry(&templateSecret, &secretsDB)
 
-	addEntryView.SecretForm.TypeSecretEntryInForm(keepass.SecretEntry{
+	addEntryView.SecretForm.TypeSecretEntryInForm(secretsdb.SecretEntry{
 		Title: "aTitle", Username: "aUsername", Password: "aPassword", Url: "aUrl", Notes: "someNotes"},
 	)
 
@@ -95,7 +95,7 @@ func TestAddEntryTapOnSubmitTakesUsToThePreviousScreenAndAddsEntryToSecretsDB(t 
 	stagerController := mocks_ui.NewMockStagerController(mockCtrl)
 	addEntryView := ui.CreateAddEntryView("previousScreen", stagerController)
 
-	templateSecret := keepass.SecretEntry{
+	templateSecret := secretsdb.SecretEntry{
 		Path: []string{"path 1"}, Group: "path 1", IsGroup: false,
 	}
 	stagerController.EXPECT().TakeOver("AddEntry").Times(1).Return(nil)
@@ -106,7 +106,7 @@ func TestAddEntryTapOnSubmitTakesUsToThePreviousScreenAndAddsEntryToSecretsDB(t 
 	addEntryView.AddEntry(&templateSecret, &secretsDB)
 	assert.Equal(t, 1, len(entriesForPath1), "Starts with one entry")
 
-	matchingEntryPredicate := func(entry keepass.SecretEntry) bool {
+	matchingEntryPredicate := func(entry secretsdb.SecretEntry) bool {
 		return entry.Title == "aTitle" &&
 			entry.Username == "aUsername" && entry.Password == "aPassword" &&
 			entry.Url == "aUrl" && entry.Notes == "someNotes"
@@ -116,7 +116,7 @@ func TestAddEntryTapOnSubmitTakesUsToThePreviousScreenAndAddsEntryToSecretsDB(t 
 
 	assert.Equal(t, -1, indexEntryWithNameATitle, "Not found any entry with title: aTitle, etc")
 
-	addEntryView.SecretForm.TypeSecretEntryInForm(keepass.SecretEntry{
+	addEntryView.SecretForm.TypeSecretEntryInForm(secretsdb.SecretEntry{
 		Title: "aTitle", Username: "aUsername", Password: "aPassword", Url: "aUrl", Notes: "someNotes"},
 	)
 

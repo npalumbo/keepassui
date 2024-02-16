@@ -2,7 +2,7 @@ package ui
 
 import (
 	"errors"
-	"keepassui/internal/keepass"
+	"keepassui/internal/secretsdb"
 	"log/slog"
 	"strings"
 
@@ -31,7 +31,7 @@ type NavView struct {
 	dbPathAndPassword       *DBPathAndPassword
 	secretReaderResolver    SecretReaderResolver
 	currentPath             string
-	secretsDB               *keepass.SecretsDB
+	secretsDB               *secretsdb.SecretsDB
 }
 
 func (n *NavView) DataChanged() {
@@ -180,7 +180,7 @@ func (n *NavView) UpdateNavView(path string) {
 		groupNameEntry.Validator = createValidator("Group")
 		form := dialog.NewForm("Add new group", "Confirm", "Cancel", []*widget.FormItem{widget.NewFormItem("Name", groupNameEntry)}, func(valid bool) {
 			if valid {
-				newGroup := keepass.SecretEntry{Path: pathComponents, Group: path, Title: groupNameEntry.Text, IsGroup: true}
+				newGroup := secretsdb.SecretEntry{Path: pathComponents, Group: path, Title: groupNameEntry.Text, IsGroup: true}
 				n.secretsDB.AddSecretEntry(newGroup)
 				n.UpdateNavView(path)
 			}
@@ -189,12 +189,12 @@ func (n *NavView) UpdateNavView(path string) {
 	}
 
 	n.SecretEntryCreateButton.OnTapped = func() {
-		templateEntry := keepass.SecretEntry{Path: pathComponents, Group: path, IsGroup: false}
+		templateEntry := secretsdb.SecretEntry{Path: pathComponents, Group: path, IsGroup: false}
 		n.addEntryView.AddEntry(&templateEntry, n.secretsDB)
 	}
 }
 
-func createListNav(listOfSecretsForPath []keepass.SecretEntry, detailedView *DetailedView, parent fyne.Window, navView *NavView) (*widget.List, error) {
+func createListNav(listOfSecretsForPath []secretsdb.SecretEntry, detailedView *DetailedView, parent fyne.Window, navView *NavView) (*widget.List, error) {
 	untypedList := binding.NewUntypedList()
 	newList := widget.NewListWithData(untypedList,
 		func() fyne.CanvasObject {
@@ -218,7 +218,7 @@ func createListNav(listOfSecretsForPath []keepass.SecretEntry, detailedView *Det
 				return
 			}
 
-			secret := untyped.(keepass.SecretEntry)
+			secret := untyped.(secretsdb.SecretEntry)
 			objects := box.Objects
 			iconAndLabel := objects[0].(*fyne.Container)
 
@@ -253,7 +253,9 @@ func createListNav(listOfSecretsForPath []keepass.SecretEntry, detailedView *Det
 					parent.Clipboard().SetContent(secret.Password)
 				}
 				showInfoButton.OnTapped = func() {
-					detailedView.ShowDetails(secret)
+					// DeepCopy.
+					navView.addEntryView.ModifyEntry(&secret)
+					// navView.secretsDB.
 				}
 
 			}

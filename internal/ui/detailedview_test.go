@@ -1,7 +1,7 @@
 package ui_test
 
 import (
-	"keepassui/internal/keepass"
+	"keepassui/internal/secretsdb"
 	"keepassui/internal/ui"
 	"testing"
 
@@ -27,7 +27,7 @@ func TestShowDetails_HasContent(t *testing.T) {
 	w := test.NewWindow(container.NewWithoutLayout())
 	w.SetContent(detailedView.GetPaintedContainer())
 
-	secretEntry := keepass.SecretEntry{
+	secretEntry := secretsdb.SecretEntry{
 		Title:    "title",
 		Group:    "path",
 		Username: "username",
