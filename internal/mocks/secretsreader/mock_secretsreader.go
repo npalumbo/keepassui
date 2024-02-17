@@ -108,12 +108,11 @@ func (mr *MockSecretReaderMockRecorder) GetUriID() *gomock.Call {
 }
 
 // ReadEntriesFromContentGroupedByPath mocks base method.
-func (m *MockSecretReader) ReadEntriesFromContentGroupedByPath() (secretsdb.SecretsDB, error) {
+func (m *MockSecretReader) ReadEntriesFromContentGroupedByPath() error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ReadEntriesFromContentGroupedByPath")
-	ret0, _ := ret[0].(secretsdb.SecretsDB)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
 // ReadEntriesFromContentGroupedByPath indicates an expected call of ReadEntriesFromContentGroupedByPath.

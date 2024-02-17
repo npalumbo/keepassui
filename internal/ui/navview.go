@@ -31,7 +31,6 @@ type NavView struct {
 	parent                  fyne.Window
 	dbPathAndPassword       secretsreader.SecretReader
 	currentPath             string
-	secretsDB               *secretsdb.SecretsDB
 }
 
 func (n *NavView) DataChanged() {
@@ -39,14 +38,12 @@ func (n *NavView) DataChanged() {
 		return
 	}
 
-	secretsDB, err := n.dbPathAndPassword.ReadEntriesFromContentGroupedByPath()
+	err := n.dbPathAndPassword.ReadEntriesFromContentGroupedByPath()
 
 	if err != nil {
 		dialog.ShowError(errors.New("Error reading secrets: "+err.Error()), n.parent)
 		return
 	}
-
-	n.secretsDB = &secretsDB
 
 	n.UpdateNavView(n.dbPathAndPassword.GetFirstPath())
 
@@ -230,7 +227,7 @@ func createListNav(listOfSecretsForPath []secretsdb.SecretEntry, detailedView *D
 			openGroupButton := buttons.Objects[2].(*widget.Button)
 			deleteButton := buttons.Objects[3].(*widget.Button)
 			deleteButton.OnTapped = func() {
-				deleted := navView.secretsDB.DeleteSecretEntry(secret)
+				deleted := navView.dbPathAndPassword.DeleteSecretEntry(secret)
 				if deleted {
 					navView.UpdateNavView(secret.Group)
 				}
@@ -251,9 +248,7 @@ func createListNav(listOfSecretsForPath []secretsdb.SecretEntry, detailedView *D
 					parent.Clipboard().SetContent(secret.Password)
 				}
 				showInfoButton.OnTapped = func() {
-					// DeepCopy.
 					navView.addEntryView.ModifyEntry(&secret)
-					// navView.secretsDB.
 				}
 
 			}

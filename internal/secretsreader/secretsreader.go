@@ -23,7 +23,7 @@ func CreateDefaultSecretReader(uriID string, contentInBytes []byte, password str
 }
 
 type SecretReader interface {
-	ReadEntriesFromContentGroupedByPath() (secretsdb.SecretsDB, error) //TODO remove return of secretsDB
+	ReadEntriesFromContentGroupedByPath() error
 	GetUriID() string
 	GetFirstPath() string
 	GetEntriesForPath(path string) []secretsdb.SecretEntry
@@ -32,12 +32,12 @@ type SecretReader interface {
 	DeleteSecretEntry(secretEntry secretsdb.SecretEntry) bool
 }
 
-func (ckdb DBPathAndPassword) ReadEntriesFromContentGroupedByPath() (secretsdb.SecretsDB, error) {
+func (ckdb DBPathAndPassword) ReadEntriesFromContentGroupedByPath() error {
 	secretsDB, err := secretsdb.ReadSecretsDBFromDBBytes(ckdb.ContentInBytes, ckdb.Password)
 	if err == nil {
 		loadedDB = &secretsDB
 	}
-	return secretsDB, err
+	return err
 }
 
 func (ckdb DBPathAndPassword) GetUriID() string {
