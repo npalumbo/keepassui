@@ -9,7 +9,6 @@ type MainContent struct {
 	DBFileEntry          DBFileEntry
 	MasterPasswordDialog MasterPasswordDialog
 	NavView              NavView
-	detailedView         DetailedView
 	stageManager         StageManager
 }
 
@@ -22,13 +21,11 @@ func CreateMainContent(parent fyne.Window, stor fyne.Storage) MainContent {
 	dbFileEntry := CreateDBFileEntry(&masterPasswordDialog, parent)
 	currentContainer := container.NewStack()
 	stageManager := CreateStageManager(currentContainer)
-	detailedView := CreateDetailedView("NavView", stageManager)
 	addEntryView := CreateAddEntryView(secretsReader, "NavView", stageManager)
-	navView := CreateNavView(secretsReader, &addEntryView, &detailedView, parent, &stageManager)
+	navView := CreateNavView(secretsReader, &addEntryView, parent, &stageManager)
 
 	stageManager.RegisterStager(&navView)
 	stageManager.RegisterStager(&addEntryView)
-	stageManager.RegisterStager(&detailedView)
 
 	masterPasswordDialog.AddListener(&navView)
 
@@ -36,7 +33,6 @@ func CreateMainContent(parent fyne.Window, stor fyne.Storage) MainContent {
 		DBFileEntry:          dbFileEntry,
 		MasterPasswordDialog: masterPasswordDialog,
 		NavView:              navView,
-		detailedView:         detailedView,
 		stageManager:         stageManager,
 	}
 }

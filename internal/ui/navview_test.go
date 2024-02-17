@@ -27,7 +27,7 @@ func TestNavView_DataChanged_Does_Nothing_When_SecretsReader_is_EmptyObject(t *t
 	secretsReader := &secretsreader.DefaultSecretsReader{}
 	w := test.NewWindow(container.NewWithoutLayout())
 
-	navView := ui.CreateNavView(secretsReader, nil, nil, w, nil)
+	navView := ui.CreateNavView(secretsReader, nil, w, nil)
 
 	navView.DataChanged()
 
@@ -46,7 +46,7 @@ func TestNavView_DataChanged_Shows_Error_Error_Reading_secrets(t *testing.T) {
 	secretReader.EXPECT().ReadEntriesFromContentGroupedByPath().Times(1).Return(errors.New("Fake Error"))
 	secretReader.EXPECT().GetUriID().Times(1).Return("path")
 
-	navView := ui.CreateNavView(secretReader, nil, nil, w, nil)
+	navView := ui.CreateNavView(secretReader, nil, w, nil)
 
 	navView.DataChanged()
 
@@ -68,7 +68,7 @@ func TestNavView_DataChanged(t *testing.T) {
 	secretReader.EXPECT().GetFirstPath().Times(1).Return("path 1")
 	secretReader.EXPECT().GetEntriesForPath("path 1").Times(1).Return(secretsDBForTesting().EntriesByPath["path 1"])
 
-	navView := ui.CreateNavView(secretReader, nil, nil, w, nil)
+	navView := ui.CreateNavView(secretReader, nil, w, nil)
 
 	navView.DataChanged()
 	w.SetContent(navView.GetPaintedContainer())
@@ -88,7 +88,7 @@ func TestNavView_DataChanged_two_groups(t *testing.T) {
 	secretReader.EXPECT().GetFirstPath().Times(1).Return("path 1")
 	secretReader.EXPECT().GetEntriesForPath("path 1").Times(1).Return(secretsDBWithTwoGroups().EntriesByPath["path 1"])
 
-	navView := ui.CreateNavView(secretReader, nil, nil, w, nil)
+	navView := ui.CreateNavView(secretReader, nil, w, nil)
 
 	navView.DataChanged()
 	w.SetContent(navView.GetPaintedContainer())
@@ -108,7 +108,7 @@ func TestNavView_NavigateToNestedFolder(t *testing.T) {
 	secretReader.EXPECT().GetFirstPath().Times(1).Return("path 1")
 	secretReader.EXPECT().GetEntriesForPath("path 1").Times(1).Return(secretsDBWithTwoGroups().EntriesByPath["path 1"])
 
-	navView := ui.CreateNavView(secretReader, nil, nil, w, nil)
+	navView := ui.CreateNavView(secretReader, nil, w, nil)
 
 	navView.DataChanged()
 	w.SetContent(navView.GetPaintedContainer())
@@ -137,7 +137,7 @@ func TestNavView_DeleteFirstEntry(t *testing.T) {
 	secretReader.EXPECT().GetFirstPath().Times(1).Return("path 1")
 	secretReader.EXPECT().GetEntriesForPath("path 1").Times(1).Return(secretsDBWithTwoGroups.EntriesByPath["path 1"])
 
-	navView := ui.CreateNavView(secretReader, nil, nil, w, nil)
+	navView := ui.CreateNavView(secretReader, nil, w, nil)
 
 	navView.DataChanged()
 	w.SetContent(navView.GetPaintedContainer())
@@ -170,7 +170,7 @@ func TestNavView_TapSaveButtonOpensSaveDialog(t *testing.T) {
 	secretReader.EXPECT().GetFirstPath().Times(1).Return("path 1")
 	secretReader.EXPECT().GetEntriesForPath("path 1").Times(1).Return(secretsDBWithTwoGroups.EntriesByPath["path 1"])
 
-	navView := ui.CreateNavView(secretReader, nil, nil, w, nil)
+	navView := ui.CreateNavView(secretReader, nil, w, nil)
 
 	navView.DataChanged()
 
@@ -200,7 +200,7 @@ func TestNavView_TapOnNewGroupOpensNewGroupDialog(t *testing.T) {
 	secretReader.EXPECT().GetFirstPath().Times(1).Return("path 1")
 	secretReader.EXPECT().GetEntriesForPath("path 1").Times(1).Return(secretsDBWithTwoGroups.EntriesByPath["path 1"])
 
-	navView := ui.CreateNavView(secretReader, nil, nil, w, nil)
+	navView := ui.CreateNavView(secretReader, nil, w, nil)
 
 	navView.DataChanged()
 
@@ -233,7 +233,7 @@ func TestNavView_TapOnNewSecretCallsAddEntry(t *testing.T) {
 
 	entryUpdater.EXPECT().AddEntry(&templateSecret).Times(1)
 
-	navView := ui.CreateNavView(secretReader, entryUpdater, nil, w, nil)
+	navView := ui.CreateNavView(secretReader, entryUpdater, w, nil)
 
 	navView.DataChanged()
 

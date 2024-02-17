@@ -26,7 +26,6 @@ type NavView struct {
 	breadCrumbs             *fyne.Container
 	generalButtons          *fyne.Container
 	listPanel               *fyne.Container
-	detailedView            *DetailedView
 	addEntryView            EntryUpdater
 	parent                  fyne.Window
 	secretsReader           secretsreader.SecretReader
@@ -138,9 +137,8 @@ func getLocationURI(fURI fyne.URI) (fyne.ListableURI, error) {
 }
 
 func (n *NavView) UpdateNavView(path string) {
-	listOfSecretsForPath := n.secretsReader.GetEntriesForPath(path)
 
-	list, err := createListNav(listOfSecretsForPath, n.detailedView, n.parent, n)
+	list, err := createListNav(path, n.parent, n)
 	list.Refresh()
 
 	if err != nil {
@@ -189,7 +187,8 @@ func (n *NavView) UpdateNavView(path string) {
 	}
 }
 
-func createListNav(listOfSecretsForPath []secretsdb.SecretEntry, detailedView *DetailedView, parent fyne.Window, navView *NavView) (*widget.List, error) {
+func createListNav(path string, parent fyne.Window, navView *NavView) (*widget.List, error) {
+	listOfSecretsForPath := navView.secretsReader.GetEntriesForPath(path)
 	untypedList := binding.NewUntypedList()
 	newList := widget.NewListWithData(untypedList,
 		func() fyne.CanvasObject {
@@ -265,7 +264,7 @@ func createListNav(listOfSecretsForPath []secretsdb.SecretEntry, detailedView *D
 	return newList, nil
 }
 
-func CreateNavView(dbPathAndPassword secretsreader.SecretReader, addEntryView EntryUpdater, detailedView *DetailedView, parent fyne.Window, stageManager *StageManager) NavView {
+func CreateNavView(secretsReader secretsreader.SecretReader, addEntryView EntryUpdater, parent fyne.Window, stageManager *StageManager) NavView {
 
 	breadCrumbs := container.NewHBox()
 	generalButtons := container.NewHBox()
@@ -294,9 +293,8 @@ func CreateNavView(dbPathAndPassword secretsreader.SecretReader, addEntryView En
 		breadCrumbs:             breadCrumbs,
 		listPanel:               listPanel,
 		addEntryView:            addEntryView,
-		detailedView:            detailedView,
 		parent:                  parent,
-		secretsReader:           dbPathAndPassword,
+		secretsReader:           secretsReader,
 		currentPath:             "",
 		generalButtons:          generalButtons,
 		navTop:                  navTop,
