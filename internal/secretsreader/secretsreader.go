@@ -6,7 +6,7 @@ import (
 
 //go:generate mockgen -destination=../mocks/secretsreader/mock_secretsreader.go -source=./secretsreader.go
 
-type DBPathAndPassword struct {
+type DefaultSecretsReader struct {
 	UriID          string
 	ContentInBytes []byte
 	Password       string
@@ -14,8 +14,8 @@ type DBPathAndPassword struct {
 
 var loadedDB *secretsdb.SecretsDB
 
-func CreateDefaultSecretReader(uriID string, contentInBytes []byte, password string) SecretReader {
-	return DBPathAndPassword{
+func CreateDefaultSecretsReader(uriID string, contentInBytes []byte, password string) DefaultSecretsReader {
+	return DefaultSecretsReader{
 		UriID:          uriID,
 		ContentInBytes: contentInBytes,
 		Password:       password,
@@ -32,7 +32,7 @@ type SecretReader interface {
 	DeleteSecretEntry(secretEntry secretsdb.SecretEntry) bool
 }
 
-func (ckdb DBPathAndPassword) ReadEntriesFromContentGroupedByPath() error {
+func (ckdb DefaultSecretsReader) ReadEntriesFromContentGroupedByPath() error {
 	secretsDB, err := secretsdb.ReadSecretsDBFromDBBytes(ckdb.ContentInBytes, ckdb.Password)
 	if err == nil {
 		loadedDB = &secretsDB
@@ -40,26 +40,26 @@ func (ckdb DBPathAndPassword) ReadEntriesFromContentGroupedByPath() error {
 	return err
 }
 
-func (ckdb DBPathAndPassword) GetUriID() string {
+func (ckdb DefaultSecretsReader) GetUriID() string {
 	return ckdb.UriID
 }
 
-func (ckdb DBPathAndPassword) GetFirstPath() string {
+func (ckdb DefaultSecretsReader) GetFirstPath() string {
 	return loadedDB.PathsInOrder[0]
 }
 
-func (ckdb DBPathAndPassword) GetEntriesForPath(path string) []secretsdb.SecretEntry {
+func (ckdb DefaultSecretsReader) GetEntriesForPath(path string) []secretsdb.SecretEntry {
 	return loadedDB.EntriesByPath[path]
 }
 
-func (ckdb DBPathAndPassword) WriteDBBytes() ([]byte, error) {
+func (ckdb DefaultSecretsReader) WriteDBBytes() ([]byte, error) {
 	return loadedDB.WriteDBBytes(ckdb.Password)
 }
 
-func (ckdb DBPathAndPassword) AddSecretEntry(secretEntry secretsdb.SecretEntry) {
+func (ckdb DefaultSecretsReader) AddSecretEntry(secretEntry secretsdb.SecretEntry) {
 	loadedDB.AddSecretEntry(secretEntry)
 }
 
-func (ckdb DBPathAndPassword) DeleteSecretEntry(secretEntry secretsdb.SecretEntry) bool {
+func (ckdb DefaultSecretsReader) DeleteSecretEntry(secretEntry secretsdb.SecretEntry) bool {
 	return loadedDB.DeleteSecretEntry(secretEntry)
 }

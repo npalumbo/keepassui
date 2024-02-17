@@ -19,22 +19,22 @@ type MockedSecretReaderFactory struct {
 	mockedSecretReader secretsreader.SecretReader
 }
 
-func (m MockedSecretReaderFactory) GetSecretReader(d secretsreader.DBPathAndPassword) secretsreader.SecretReader {
+func (m MockedSecretReaderFactory) GetSecretReader(d secretsreader.DefaultSecretsReader) secretsreader.SecretReader {
 	return m.mockedSecretReader
 }
 
-func TestNavView_DataChanged_Does_Nothing_When_DBPathAndPassword_is_EmptyObject(t *testing.T) {
-	dbPathAndPassword := &secretsreader.DBPathAndPassword{}
+func TestNavView_DataChanged_Does_Nothing_When_SecretsReader_is_EmptyObject(t *testing.T) {
+	secretsReader := &secretsreader.DefaultSecretsReader{}
 	w := test.NewWindow(container.NewWithoutLayout())
 
-	navView := ui.CreateNavView(dbPathAndPassword, nil, nil, w, nil)
+	navView := ui.CreateNavView(secretsReader, nil, nil, w, nil)
 
 	navView.DataChanged()
 
 	w.SetContent(navView.GetPaintedContainer())
 	w.Resize(fyne.NewSize(600, 600))
 
-	test.AssertImageMatches(t, "navView_Err_Does_Nothing_When_DBPathAndPassword_is_EmptyObject.png", w.Canvas().Capture())
+	test.AssertImageMatches(t, "navView_Err_Does_Nothing_When_SecretsReader_is_EmptyObject.png", w.Canvas().Capture())
 }
 
 func TestNavView_DataChanged_Shows_Error_Error_Reading_secrets(t *testing.T) {

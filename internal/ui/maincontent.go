@@ -1,8 +1,6 @@
 package ui
 
 import (
-	"keepassui/internal/secretsreader"
-
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 )
@@ -20,14 +18,13 @@ func (m *MainContent) MakeUI() fyne.CanvasObject {
 }
 
 func CreateMainContent(parent fyne.Window, stor fyne.Storage) MainContent {
-	dbPathAndPassword := &secretsreader.DBPathAndPassword{}
-	masterPasswordDialog := CreateDialog(dbPathAndPassword, parent)
+	masterPasswordDialog, secretsReader := CreateDialog(parent)
 	dbFileEntry := CreateDBFileEntry(&masterPasswordDialog, parent)
 	currentContainer := container.NewStack()
 	stageManager := CreateStageManager(currentContainer)
 	detailedView := CreateDetailedView("NavView", stageManager)
-	addEntryView := CreateAddEntryView(dbPathAndPassword, "NavView", stageManager)
-	navView := CreateNavView(dbPathAndPassword, &addEntryView, &detailedView, parent, &stageManager)
+	addEntryView := CreateAddEntryView(secretsReader, "NavView", stageManager)
+	navView := CreateNavView(secretsReader, &addEntryView, &detailedView, parent, &stageManager)
 
 	stageManager.RegisterStager(&navView)
 	stageManager.RegisterStager(&addEntryView)

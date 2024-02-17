@@ -29,32 +29,32 @@ type NavView struct {
 	detailedView            *DetailedView
 	addEntryView            EntryUpdater
 	parent                  fyne.Window
-	dbPathAndPassword       secretsreader.SecretReader
+	secretsReader           secretsreader.SecretReader
 	currentPath             string
 }
 
 func (n *NavView) DataChanged() {
-	if n.dbPathAndPassword.GetUriID() == "" {
+	if n.secretsReader.GetUriID() == "" {
 		return
 	}
 
-	err := n.dbPathAndPassword.ReadEntriesFromContentGroupedByPath()
+	err := n.secretsReader.ReadEntriesFromContentGroupedByPath()
 
 	if err != nil {
 		dialog.ShowError(errors.New("Error reading secrets: "+err.Error()), n.parent)
 		return
 	}
 
-	n.UpdateNavView(n.dbPathAndPassword.GetFirstPath())
+	n.UpdateNavView(n.secretsReader.GetFirstPath())
 
 	n.SaveButton.OnTapped = func() {
-		bytes, err := n.dbPathAndPassword.WriteDBBytes()
+		bytes, err := n.secretsReader.WriteDBBytes()
 
 		if err != nil {
 			dialog.ShowError(err, n.parent)
 			return
 		}
-		fileSaveDialog := createFileSaveDialog(bytes, n.dbPathAndPassword.GetUriID(), n.parent)
+		fileSaveDialog := createFileSaveDialog(bytes, n.secretsReader.GetUriID(), n.parent)
 
 		if fileSaveDialog != nil {
 			fileSaveDialog.Show()
@@ -138,7 +138,7 @@ func getLocationURI(fURI fyne.URI) (fyne.ListableURI, error) {
 }
 
 func (n *NavView) UpdateNavView(path string) {
-	listOfSecretsForPath := n.dbPathAndPassword.GetEntriesForPath(path)
+	listOfSecretsForPath := n.secretsReader.GetEntriesForPath(path)
 
 	list, err := createListNav(listOfSecretsForPath, n.detailedView, n.parent, n)
 	list.Refresh()
@@ -176,7 +176,7 @@ func (n *NavView) UpdateNavView(path string) {
 		form := dialog.NewForm("Add new group", "Confirm", "Cancel", []*widget.FormItem{widget.NewFormItem("Name", groupNameEntry)}, func(valid bool) {
 			if valid {
 				newGroup := secretsdb.SecretEntry{Path: pathComponents, Group: path, Title: groupNameEntry.Text, IsGroup: true}
-				n.dbPathAndPassword.AddSecretEntry(newGroup)
+				n.secretsReader.AddSecretEntry(newGroup)
 				n.UpdateNavView(path)
 			}
 		}, n.parent)
@@ -227,7 +227,7 @@ func createListNav(listOfSecretsForPath []secretsdb.SecretEntry, detailedView *D
 			openGroupButton := buttons.Objects[2].(*widget.Button)
 			deleteButton := buttons.Objects[3].(*widget.Button)
 			deleteButton.OnTapped = func() {
-				deleted := navView.dbPathAndPassword.DeleteSecretEntry(secret)
+				deleted := navView.secretsReader.DeleteSecretEntry(secret)
 				if deleted {
 					navView.UpdateNavView(secret.Group)
 				}
@@ -296,7 +296,7 @@ func CreateNavView(dbPathAndPassword secretsreader.SecretReader, addEntryView En
 		addEntryView:            addEntryView,
 		detailedView:            detailedView,
 		parent:                  parent,
-		dbPathAndPassword:       dbPathAndPassword,
+		secretsReader:           dbPathAndPassword,
 		currentPath:             "",
 		generalButtons:          generalButtons,
 		navTop:                  navTop,
