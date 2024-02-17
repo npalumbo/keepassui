@@ -40,15 +40,15 @@ func (m *MockEntryUpdater) EXPECT() *MockEntryUpdaterMockRecorder {
 }
 
 // AddEntry mocks base method.
-func (m *MockEntryUpdater) AddEntry(templateEntry *secretsdb.SecretEntry, secretsDB *secretsdb.SecretsDB) {
+func (m *MockEntryUpdater) AddEntry(templateEntry *secretsdb.SecretEntry) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "AddEntry", templateEntry, secretsDB)
+	m.ctrl.Call(m, "AddEntry", templateEntry)
 }
 
 // AddEntry indicates an expected call of AddEntry.
-func (mr *MockEntryUpdaterMockRecorder) AddEntry(templateEntry, secretsDB any) *gomock.Call {
+func (mr *MockEntryUpdaterMockRecorder) AddEntry(templateEntry any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddEntry", reflect.TypeOf((*MockEntryUpdater)(nil).AddEntry), templateEntry, secretsDB)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddEntry", reflect.TypeOf((*MockEntryUpdater)(nil).AddEntry), templateEntry)
 }
 
 // ModifyEntry mocks base method.

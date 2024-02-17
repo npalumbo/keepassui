@@ -26,7 +26,7 @@ func CreateMainContent(parent fyne.Window, stor fyne.Storage) MainContent {
 	currentContainer := container.NewStack()
 	stageManager := CreateStageManager(currentContainer)
 	detailedView := CreateDetailedView("NavView", stageManager)
-	addEntryView := CreateAddEntryView("NavView", stageManager)
+	addEntryView := CreateAddEntryView(dbPathAndPassword, "NavView", stageManager)
 	navView := CreateNavView(dbPathAndPassword, &addEntryView, &detailedView, parent, &stageManager)
 
 	stageManager.RegisterStager(&navView)

@@ -48,10 +48,10 @@ func (n *NavView) DataChanged() {
 
 	n.secretsDB = &secretsDB
 
-	n.UpdateNavView(secretsDB.PathsInOrder[0])
+	n.UpdateNavView(n.dbPathAndPassword.GetFirstPath())
 
 	n.SaveButton.OnTapped = func() {
-		bytes, err := secretsDB.WriteDBBytes(n.dbPathAndPassword.GetPassword())
+		bytes, err := n.dbPathAndPassword.WriteDBBytes()
 
 		if err != nil {
 			dialog.ShowError(err, n.parent)
@@ -141,7 +141,7 @@ func getLocationURI(fURI fyne.URI) (fyne.ListableURI, error) {
 }
 
 func (n *NavView) UpdateNavView(path string) {
-	listOfSecretsForPath := n.secretsDB.EntriesByPath[path]
+	listOfSecretsForPath := n.dbPathAndPassword.GetEntriesForPath(path)
 
 	list, err := createListNav(listOfSecretsForPath, n.detailedView, n.parent, n)
 	list.Refresh()
@@ -179,7 +179,7 @@ func (n *NavView) UpdateNavView(path string) {
 		form := dialog.NewForm("Add new group", "Confirm", "Cancel", []*widget.FormItem{widget.NewFormItem("Name", groupNameEntry)}, func(valid bool) {
 			if valid {
 				newGroup := secretsdb.SecretEntry{Path: pathComponents, Group: path, Title: groupNameEntry.Text, IsGroup: true}
-				n.secretsDB.AddSecretEntry(newGroup)
+				n.dbPathAndPassword.AddSecretEntry(newGroup)
 				n.UpdateNavView(path)
 			}
 		}, n.parent)
@@ -188,7 +188,7 @@ func (n *NavView) UpdateNavView(path string) {
 
 	n.SecretEntryCreateButton.OnTapped = func() {
 		templateEntry := secretsdb.SecretEntry{Path: pathComponents, Group: path, IsGroup: false}
-		n.addEntryView.AddEntry(&templateEntry, n.secretsDB)
+		n.addEntryView.AddEntry(&templateEntry)
 	}
 }
 

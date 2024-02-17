@@ -39,32 +39,58 @@ func (m *MockSecretReader) EXPECT() *MockSecretReaderMockRecorder {
 	return m.recorder
 }
 
-// GetContentInBytes mocks base method.
-func (m *MockSecretReader) GetContentInBytes() []byte {
+// AddSecretEntry mocks base method.
+func (m *MockSecretReader) AddSecretEntry(secretEntry secretsdb.SecretEntry) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetContentInBytes")
-	ret0, _ := ret[0].([]byte)
+	m.ctrl.Call(m, "AddSecretEntry", secretEntry)
+}
+
+// AddSecretEntry indicates an expected call of AddSecretEntry.
+func (mr *MockSecretReaderMockRecorder) AddSecretEntry(secretEntry any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddSecretEntry", reflect.TypeOf((*MockSecretReader)(nil).AddSecretEntry), secretEntry)
+}
+
+// DeleteSecretEntry mocks base method.
+func (m *MockSecretReader) DeleteSecretEntry(secretEntry secretsdb.SecretEntry) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteSecretEntry", secretEntry)
+	ret0, _ := ret[0].(bool)
 	return ret0
 }
 
-// GetContentInBytes indicates an expected call of GetContentInBytes.
-func (mr *MockSecretReaderMockRecorder) GetContentInBytes() *gomock.Call {
+// DeleteSecretEntry indicates an expected call of DeleteSecretEntry.
+func (mr *MockSecretReaderMockRecorder) DeleteSecretEntry(secretEntry any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetContentInBytes", reflect.TypeOf((*MockSecretReader)(nil).GetContentInBytes))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSecretEntry", reflect.TypeOf((*MockSecretReader)(nil).DeleteSecretEntry), secretEntry)
 }
 
-// GetPassword mocks base method.
-func (m *MockSecretReader) GetPassword() string {
+// GetEntriesForPath mocks base method.
+func (m *MockSecretReader) GetEntriesForPath(path string) []secretsdb.SecretEntry {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPassword")
+	ret := m.ctrl.Call(m, "GetEntriesForPath", path)
+	ret0, _ := ret[0].([]secretsdb.SecretEntry)
+	return ret0
+}
+
+// GetEntriesForPath indicates an expected call of GetEntriesForPath.
+func (mr *MockSecretReaderMockRecorder) GetEntriesForPath(path any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntriesForPath", reflect.TypeOf((*MockSecretReader)(nil).GetEntriesForPath), path)
+}
+
+// GetFirstPath mocks base method.
+func (m *MockSecretReader) GetFirstPath() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetFirstPath")
 	ret0, _ := ret[0].(string)
 	return ret0
 }
 
-// GetPassword indicates an expected call of GetPassword.
-func (mr *MockSecretReaderMockRecorder) GetPassword() *gomock.Call {
+// GetFirstPath indicates an expected call of GetFirstPath.
+func (mr *MockSecretReaderMockRecorder) GetFirstPath() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPassword", reflect.TypeOf((*MockSecretReader)(nil).GetPassword))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFirstPath", reflect.TypeOf((*MockSecretReader)(nil).GetFirstPath))
 }
 
 // GetUriID mocks base method.
@@ -94,4 +120,19 @@ func (m *MockSecretReader) ReadEntriesFromContentGroupedByPath() (secretsdb.Secr
 func (mr *MockSecretReaderMockRecorder) ReadEntriesFromContentGroupedByPath() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadEntriesFromContentGroupedByPath", reflect.TypeOf((*MockSecretReader)(nil).ReadEntriesFromContentGroupedByPath))
+}
+
+// WriteDBBytes mocks base method.
+func (m *MockSecretReader) WriteDBBytes() ([]byte, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WriteDBBytes")
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WriteDBBytes indicates an expected call of WriteDBBytes.
+func (mr *MockSecretReaderMockRecorder) WriteDBBytes() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WriteDBBytes", reflect.TypeOf((*MockSecretReader)(nil).WriteDBBytes))
 }

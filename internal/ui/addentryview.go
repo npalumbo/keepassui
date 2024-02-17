@@ -2,6 +2,7 @@ package ui
 
 import (
 	"keepassui/internal/secretsdb"
+	"keepassui/internal/secretsreader"
 	"log/slog"
 
 	"fyne.io/fyne/v2"
@@ -9,12 +10,13 @@ import (
 
 //go:generate mockgen -destination=../mocks/ui/mock_addentryview.go -source=./addentryview.go
 type EntryUpdater interface {
-	AddEntry(templateEntry *secretsdb.SecretEntry, secretsDB *secretsdb.SecretsDB)
+	AddEntry(templateEntry *secretsdb.SecretEntry)
 	ModifyEntry(templateEntry *secretsdb.SecretEntry)
 }
 
 type AddEntryView struct {
 	DefaultStager
+	secretsReader     secretsreader.SecretReader
 	SecretForm        *SecretForm
 	stageManager      StagerController
 	previousStageName string
@@ -28,11 +30,11 @@ func (a *AddEntryView) GetStageName() string {
 	return "AddEntry"
 }
 
-func (a *AddEntryView) AddEntry(templateEntry *secretsdb.SecretEntry, secretsDB *secretsdb.SecretsDB) {
-	addOrModify(a, templateEntry, secretsDB)
+func (a *AddEntryView) AddEntry(templateEntry *secretsdb.SecretEntry) {
+	addOrModify(a, templateEntry, false)
 }
 
-func addOrModify(a *AddEntryView, templateEntry *secretsdb.SecretEntry, secretsDB *secretsdb.SecretsDB) {
+func addOrModify(a *AddEntryView, templateEntry *secretsdb.SecretEntry, modify bool) {
 	secretForm := CreateSecretForm(false)
 	secretForm.UpdateForm(*templateEntry)
 	a.SecretForm = &secretForm
@@ -45,8 +47,8 @@ func addOrModify(a *AddEntryView, templateEntry *secretsdb.SecretEntry, secretsD
 	secretForm.DetailsForm.Refresh()
 	secretForm.DetailsForm.OnSubmit = func() {
 		secretForm.UpdateEntry(templateEntry)
-		if secretsDB != nil {
-			secretsDB.AddSecretEntry(*templateEntry)
+		if !modify {
+			a.secretsReader.AddSecretEntry(*templateEntry)
 		}
 		err := a.stageManager.TakeOver(a.previousStageName)
 		if err != nil {
@@ -60,12 +62,13 @@ func addOrModify(a *AddEntryView, templateEntry *secretsdb.SecretEntry, secretsD
 }
 
 func (a *AddEntryView) ModifyEntry(templateEntry *secretsdb.SecretEntry) {
-	addOrModify(a, templateEntry, nil)
+	addOrModify(a, templateEntry, true)
 }
 
-func CreateAddEntryView(previousStageName string, stageManager StagerController) AddEntryView {
+func CreateAddEntryView(secretsreader secretsreader.SecretReader, previousStageName string, stageManager StagerController) AddEntryView {
 
 	return AddEntryView{
+		secretsReader:     secretsreader,
 		SecretForm:        nil,
 		stageManager:      stageManager,
 		previousStageName: previousStageName,

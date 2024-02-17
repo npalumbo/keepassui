@@ -68,6 +68,8 @@ func TestNavView_DataChanged(t *testing.T) {
 		nil,
 	)
 	secretReader.EXPECT().GetUriID().Times(1).Return("path")
+	secretReader.EXPECT().GetFirstPath().Times(1).Return("path 1")
+	secretReader.EXPECT().GetEntriesForPath("path 1").Times(1).Return(secretsDBForTesting().EntriesByPath["path 1"])
 
 	navView := ui.CreateNavView(secretReader, nil, nil, w, nil)
 
@@ -88,7 +90,10 @@ func TestNavView_DataChanged_two_groups(t *testing.T) {
 		secretsDBWithTwoGroups(),
 		nil,
 	)
+
 	secretReader.EXPECT().GetUriID().Times(1).Return("path")
+	secretReader.EXPECT().GetFirstPath().Times(1).Return("path 1")
+	secretReader.EXPECT().GetEntriesForPath("path 1").Times(1).Return(secretsDBWithTwoGroups().EntriesByPath["path 1"])
 
 	navView := ui.CreateNavView(secretReader, nil, nil, w, nil)
 
@@ -110,6 +115,8 @@ func TestNavView_NavigateToNestedFolder(t *testing.T) {
 		nil,
 	)
 	secretReader.EXPECT().GetUriID().Times(1).Return("path")
+	secretReader.EXPECT().GetFirstPath().Times(1).Return("path 1")
+	secretReader.EXPECT().GetEntriesForPath("path 1").Times(1).Return(secretsDBWithTwoGroups().EntriesByPath["path 1"])
 
 	navView := ui.CreateNavView(secretReader, nil, nil, w, nil)
 
@@ -118,6 +125,8 @@ func TestNavView_NavigateToNestedFolder(t *testing.T) {
 	w.Resize(fyne.NewSize(600, 600))
 
 	test.AssertImageMatches(t, "navView_two_groups.png", w.Canvas().Capture())
+
+	secretReader.EXPECT().GetEntriesForPath("path 2").Times(1).Return(secretsDBWithTwoGroups().EntriesByPath["path 2"])
 
 	// Ideally we would simulate a click from the UI but I struggle to find the right open button from the list
 	navView.UpdateNavView("path 2")
@@ -138,6 +147,9 @@ func TestNavView_DeleteFirstEntry(t *testing.T) {
 		nil,
 	)
 	secretReader.EXPECT().GetUriID().Times(1).Return("path")
+	secretReader.EXPECT().GetFirstPath().Times(1).Return("path 1")
+	secretReader.EXPECT().GetEntriesForPath("path 1").Times(1).Return(secretsDBWithTwoGroups.EntriesByPath["path 1"])
+
 	navView := ui.CreateNavView(secretReader, nil, nil, w, nil)
 
 	navView.DataChanged()
@@ -150,6 +162,8 @@ func TestNavView_DeleteFirstEntry(t *testing.T) {
 	secretsDBWithTwoGroups.DeleteSecretEntry(secretsdb.SecretEntry{
 		Title: "title 2", Group: "path 2", Username: "username 2",
 		Password: "password 2", Url: "url 2", Notes: "notes 2"})
+
+	secretReader.EXPECT().GetEntriesForPath("path 2").Times(1).Return(secretsDBWithTwoGroups.EntriesByPath["path 2"])
 
 	navView.UpdateNavView("path 2")
 
@@ -168,8 +182,9 @@ func TestNavView_TapSaveButtonOpensSaveDialog(t *testing.T) {
 		secretsDBWithTwoGroups,
 		nil,
 	)
-	secretReader.EXPECT().GetUriID().Times(2).Return("file://path")
-	secretReader.EXPECT().GetPassword().Times(1).Return("password")
+	secretReader.EXPECT().GetUriID().Times(1).Return("file://path")
+	secretReader.EXPECT().GetFirstPath().Times(1).Return("path 1")
+	secretReader.EXPECT().GetEntriesForPath("path 1").Times(1).Return(secretsDBWithTwoGroups.EntriesByPath["path 1"])
 
 	navView := ui.CreateNavView(secretReader, nil, nil, w, nil)
 
@@ -179,6 +194,9 @@ func TestNavView_TapSaveButtonOpensSaveDialog(t *testing.T) {
 	w.Resize(fyne.NewSize(600, 600))
 
 	test.AssertImageMatches(t, "navView_two_groups.png", w.Canvas().Capture())
+
+	secretReader.EXPECT().GetUriID().Times(1).Return("file://path")
+	secretReader.EXPECT().WriteDBBytes().Times(1)
 
 	test.Tap(navView.SaveButton)
 
@@ -198,6 +216,8 @@ func TestNavView_TapOnNewGroupOpensNewGroupDialog(t *testing.T) {
 		nil,
 	)
 	secretReader.EXPECT().GetUriID().Times(1).Return("file://path")
+	secretReader.EXPECT().GetFirstPath().Times(1).Return("path 1")
+	secretReader.EXPECT().GetEntriesForPath("path 1").Times(1).Return(secretsDBWithTwoGroups.EntriesByPath["path 1"])
 
 	navView := ui.CreateNavView(secretReader, nil, nil, w, nil)
 
@@ -226,12 +246,14 @@ func TestNavView_TapOnNewSecretCallsAddEntry(t *testing.T) {
 		nil,
 	)
 	secretReader.EXPECT().GetUriID().Times(1).Return("file://path")
+	secretReader.EXPECT().GetFirstPath().Times(1).Return("path 1")
+	secretReader.EXPECT().GetEntriesForPath("path 1").Times(1).Return(secretsDBWithTwoGroups.EntriesByPath["path 1"])
 
 	entryUpdater := mocks_ui.NewMockEntryUpdater(mockCtrl)
 
 	templateSecret := secretsdb.SecretEntry{Path: []string{"path 1"}, Group: "path 1", IsGroup: false}
 
-	entryUpdater.EXPECT().AddEntry(&templateSecret, &secretsDBWithTwoGroups).Times(1)
+	entryUpdater.EXPECT().AddEntry(&templateSecret).Times(1)
 
 	navView := ui.CreateNavView(secretReader, entryUpdater, nil, w, nil)
 
