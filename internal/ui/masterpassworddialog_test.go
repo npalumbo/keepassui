@@ -76,7 +76,7 @@ func TestMasterPasswordDialog_Calls_Listener(t *testing.T) {
 
 	test.Type(masterPasswordDialog.PasswordEntry, "thePassword")
 
-	listener := &fakeListener{dataHasChangedToExpectedValues: false, dbPathAndPassword: secretsReader.(*secretsreader.DefaultSecretsReader)}
+	listener := &fakeListener{dataHasChangedToExpectedValues: false, secretsReader: secretsReader.(*secretsreader.DefaultSecretsReader)}
 
 	masterPasswordDialog.AddListener(listener)
 
@@ -95,11 +95,11 @@ func TestMasterPasswordDialog_Calls_Listener(t *testing.T) {
 
 type fakeListener struct {
 	dataHasChangedToExpectedValues bool
-	dbPathAndPassword              *secretsreader.DefaultSecretsReader
+	secretsReader                  *secretsreader.DefaultSecretsReader
 }
 
 func (f *fakeListener) DataChanged() {
-	data := *f.dbPathAndPassword
+	data := *f.secretsReader
 	if data.UriID == "file://fakeKeypassDBFilePath" && data.Password == "thePassword" {
 		f.dataHasChangedToExpectedValues = true
 	}
