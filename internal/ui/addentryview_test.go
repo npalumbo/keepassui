@@ -109,3 +109,33 @@ func TestAddEntryTapOnSubmitTakesUsToThePreviousScreenAndAddsEntryToSecretsDB(t 
 	// Ideally we would use test.Tap() on the Confirm button but the button is not reachable from widget.Form
 	addEntryView.SecretForm.DetailsForm.OnSubmit()
 }
+
+func TestModifyEntryTapOnSubmitTakesUsToThePreviousScreenAndModifiesEntryToSecretsDB(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	stagerController := mocks_ui.NewMockStagerController(mockCtrl)
+	mockSecretsReader := mock_secretsreader.NewMockSecretReader(mockCtrl)
+	modifyEntryView := ui.CreateAddEntryView(mockSecretsReader, "previousScreen", stagerController)
+
+	templateSecret := secretsdb.SecretEntry{
+		Path: []string{"path 1"}, Group: "path 1", IsGroup: false,
+		Title: "aTitle", Username: "aUsername", Password: "aPassword", Url: "aUrl", Notes: "someNotes",
+	}
+	stagerController.EXPECT().TakeOver("AddEntry").Times(1).Return(nil)
+
+	modifyEntryView.ModifyEntry(&templateSecret)
+
+	modifyEntryView.SecretForm.TypeSecretEntryInForm(secretsdb.SecretEntry{
+		Title: "aModifiedTitle", Username: "aModifiedUsername", Password: "aModifiedPassword", Url: "aModifiedUrl", Notes: "someModifiedNotes"},
+	)
+
+	mockSecretsReader.EXPECT().ModifySecretEntry("aTitle", "path 1", false, secretsdb.SecretEntry{
+		Path: []string{"path 1"}, Group: "path 1", IsGroup: false,
+		Title: "aModifiedTitle", Username: "aModifiedUsername", Password: "aModifiedPassword", Url: "aModifiedUrl", Notes: "someModifiedNotes"}).Times(1)
+
+	stagerController.EXPECT().TakeOver("previousScreen").Times(1).Return(nil)
+
+	// Ideally we would use test.Tap() on the Confirm button but the button is not reachable from widget.Form
+	modifyEntryView.SecretForm.DetailsForm.OnSubmit()
+}

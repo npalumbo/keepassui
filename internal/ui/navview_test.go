@@ -7,11 +7,14 @@ import (
 	"keepassui/internal/secretsdb"
 	"keepassui/internal/secretsreader"
 	"keepassui/internal/ui"
+	"slices"
 	"testing"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/test"
+	"fyne.io/fyne/v2/theme"
+	"fyne.io/fyne/v2/widget"
 	"go.uber.org/mock/gomock"
 )
 
@@ -243,4 +246,91 @@ func TestNavView_TapOnNewSecretCallsAddEntry(t *testing.T) {
 	test.AssertImageMatches(t, "navView_two_groups.png", w.Canvas().Capture())
 
 	test.Tap(navView.SecretEntryCreateButton)
+}
+
+func TestNavView_TapOnEditSecretCallsModifyEntry(t *testing.T) {
+	w := test.NewWindow(container.NewWithoutLayout())
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	secretReader := mock_secretsreader.NewMockSecretReader(mockCtrl)
+
+	secretsDBWithTwoGroups := secretsDBWithTwoGroups()
+	secretReader.EXPECT().ReadEntriesFromContentGroupedByPath().Times(1).Return(nil)
+	secretReader.EXPECT().GetUriID().Times(1).Return("file://path")
+	secretReader.EXPECT().GetFirstPath().Times(1).Return("path 1")
+	secretReader.EXPECT().GetEntriesForPath("path 1").Times(1).Return(secretsDBWithTwoGroups.EntriesByPath["path 1"])
+
+	entryUpdater := mocks_ui.NewMockEntryUpdater(mockCtrl)
+
+	templateSecret := secretsdb.SecretEntry{Title: "title", Group: "path 1", Username: "username", Password: "password", Url: "url", Notes: "notes"}
+
+	entryUpdater.EXPECT().ModifyEntry(&templateSecret).Times(1)
+
+	navView := ui.CreateNavView(secretReader, entryUpdater, w, nil)
+
+	navView.DataChanged()
+
+	w.SetContent(navView.GetPaintedContainer())
+	w.Resize(fyne.NewSize(600, 600))
+
+	test.AssertImageMatches(t, "navView_two_groups.png", w.Canvas().Capture())
+
+	listPanel := navView.GetPaintedContainer().Objects[0].(*fyne.Container)
+
+	list := listPanel.Objects[0].(*widget.List)
+
+	componentsInsideList := test.LaidOutObjects(list)
+	firstModifyButtonIdx := slices.IndexFunc(componentsInsideList, func(obj fyne.CanvasObject) bool {
+		button, ok := obj.(*widget.Button)
+		return ok && button.Icon == theme.DocumentCreateIcon()
+	})
+
+	firstModifyButton := componentsInsideList[firstModifyButtonIdx].(*widget.Button)
+
+	firstModifyButton.OnTapped()
+}
+
+func TestNavView_TapOnEditGroupOpensNewGroupDialog(t *testing.T) {
+	w := test.NewWindow(container.NewWithoutLayout())
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	secretReader := mock_secretsreader.NewMockSecretReader(mockCtrl)
+
+	secretsDBWithTwoGroups := secretsDBWithTwoGroups()
+	secretReader.EXPECT().ReadEntriesFromContentGroupedByPath().Times(1).Return(nil)
+	secretReader.EXPECT().GetUriID().Times(1).Return("file://path")
+	secretReader.EXPECT().GetFirstPath().Times(1).Return("path 1")
+	secretReader.EXPECT().GetEntriesForPath("path 1").Times(1).Return(secretsDBWithTwoGroups.EntriesByPath["path 1"])
+
+	navView := ui.CreateNavView(secretReader, nil, w, nil)
+
+	navView.DataChanged()
+
+	w.SetContent(navView.GetPaintedContainer())
+	w.Resize(fyne.NewSize(600, 600))
+
+	test.AssertImageMatches(t, "navView_two_groups.png", w.Canvas().Capture())
+
+	listPanel := navView.GetPaintedContainer().Objects[0].(*fyne.Container)
+
+	list := listPanel.Objects[0].(*widget.List)
+
+	componentsInsideList := test.LaidOutObjects(list)
+	count := 0
+	secondModifyButtonIdx := slices.IndexFunc(componentsInsideList, func(obj fyne.CanvasObject) bool {
+		button, ok := obj.(*widget.Button)
+		if ok && button.Icon == theme.DocumentCreateIcon() {
+			count = count + 1
+			return count == 2
+		}
+		return false
+	})
+
+	secondModifyButton := componentsInsideList[secondModifyButtonIdx].(*widget.Button)
+
+	test.Tap(secondModifyButton)
+
+	test.AssertImageMatches(t, "navView_two_groups_tap_edit_group_button.png", w.Canvas().Capture())
 }

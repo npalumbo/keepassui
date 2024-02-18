@@ -148,7 +148,6 @@ func (n *NavView) UpdateNavView(path string) {
 	}
 
 	n.breadCrumbs.RemoveAll()
-	// n.breadCrumbs.Add()
 
 	pathComponents := strings.Split(path, "|")
 	pathAcc := []string{}
@@ -255,7 +254,6 @@ func createListNav(path string, parent fyne.Window, navView *NavView) (*widget.L
 			if secret.IsGroup {
 				icon.SetResource(theme.FolderIcon())
 				copyPasswordPaddedContainer.Hide()
-				// editButton.Hide()
 
 				editButton.OnTapped = func() {
 					groupNameEntry := widget.NewEntry()
@@ -263,8 +261,6 @@ func createListNav(path string, parent fyne.Window, navView *NavView) (*widget.L
 					groupNameEntry.Validator = createValidator("Group")
 					form := dialog.NewForm("Change group name", "Confirm", "Cancel", []*widget.FormItem{widget.NewFormItem("Name", groupNameEntry)}, func(valid bool) {
 						if valid {
-							// newGroup := secretsdb.SecretEntry{Path: pathComponents, Group: path, Title: groupNameEntry.Text, IsGroup: true}
-							// n.secretsReader.AddSecretEntry(newGroup)
 							originalTitle := secret.Title
 							secret.Title = groupNameEntry.Text
 							navView.secretsReader.ModifySecretEntry(originalTitle, secret.Group, secret.IsGroup, secret)

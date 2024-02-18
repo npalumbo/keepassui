@@ -93,6 +93,11 @@ func createValidator(fieldName string) fyne.StringValidator {
 
 // Test Helper that doesn't require us to force validation
 func (f *SecretForm) TypeSecretEntryInForm(entry secretsdb.SecretEntry) {
+	f.titleEntry.Text = ""
+	f.usernameEntry.Text = ""
+	f.passwordEntry.Text = ""
+	f.urlEntry.Text = ""
+	f.notesEntry.Text = ""
 	test.Type(f.titleEntry, entry.Title)
 	test.Type(f.usernameEntry, entry.Username)
 	test.Type(f.passwordEntry, entry.Password)
