@@ -46,9 +46,14 @@ func addOrModify(a *AddEntryView, templateEntry *secretsdb.SecretEntry, modify b
 	}
 	secretForm.DetailsForm.Refresh()
 	secretForm.DetailsForm.OnSubmit = func() {
+		originalTitle := templateEntry.Title
+		originalGroup := templateEntry.Group
+		originalIsGroup := templateEntry.IsGroup
 		secretForm.UpdateEntry(templateEntry)
 		if !modify {
 			a.secretsReader.AddSecretEntry(*templateEntry)
+		} else {
+			a.secretsReader.ModifySecretEntry(originalTitle, originalGroup, originalIsGroup, *templateEntry)
 		}
 		err := a.stageManager.TakeOver(a.previousStageName)
 		if err != nil {

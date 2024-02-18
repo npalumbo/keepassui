@@ -107,6 +107,18 @@ func (mr *MockSecretReaderMockRecorder) GetUriID() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUriID", reflect.TypeOf((*MockSecretReader)(nil).GetUriID))
 }
 
+// ModifySecretEntry mocks base method.
+func (m *MockSecretReader) ModifySecretEntry(originalTitle, originalGroup string, originalIsGroup bool, secretEntry secretsdb.SecretEntry) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "ModifySecretEntry", originalTitle, originalGroup, originalIsGroup, secretEntry)
+}
+
+// ModifySecretEntry indicates an expected call of ModifySecretEntry.
+func (mr *MockSecretReaderMockRecorder) ModifySecretEntry(originalTitle, originalGroup, originalIsGroup, secretEntry any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ModifySecretEntry", reflect.TypeOf((*MockSecretReader)(nil).ModifySecretEntry), originalTitle, originalGroup, originalIsGroup, secretEntry)
+}
+
 // ReadEntriesFromContentGroupedByPath mocks base method.
 func (m *MockSecretReader) ReadEntriesFromContentGroupedByPath() error {
 	m.ctrl.T.Helper()
