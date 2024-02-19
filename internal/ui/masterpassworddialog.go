@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"keepassui/internal/secretsreader"
 	"log/slog"
 
 	"fyne.io/fyne/v2"
@@ -11,34 +12,30 @@ import (
 )
 
 type MasterPasswordDialog struct {
-	DbPathAndPassword *DBPathAndPassword
-	Dialog            *dialog.FormDialog
-	PasswordEntry     *widget.Entry
-	formItems         []*widget.FormItem
-	parent            fyne.Window
-	notify            binding.String
+	secretsReader *secretsreader.DefaultSecretsReader
+	Dialog        *dialog.FormDialog
+	PasswordEntry *widget.Entry
+	formItems     []*widget.FormItem
+	parent        fyne.Window
+	notify        binding.String
 }
 
-type DBPathAndPassword struct {
-	UriID          string
-	ContentInBytes []byte
-	Password       string
-}
-
-func CreateDialog(dbPathAndPassword *DBPathAndPassword, parent fyne.Window) MasterPasswordDialog {
+func CreateDialog(parent fyne.Window) (MasterPasswordDialog, secretsreader.SecretReader) {
 	formItems := []*widget.FormItem{}
 	passwordEntry := widget.NewPasswordEntry()
 	passwordEntry.SetPlaceHolder("KeyPass DB password")
 	formItems = append(formItems, widget.NewFormItem("password", passwordEntry))
 
+	secretsReader := secretsreader.CreateDefaultSecretsReader("", nil, "")
+
 	return MasterPasswordDialog{
-		DbPathAndPassword: dbPathAndPassword,
-		Dialog:            nil,
-		PasswordEntry:     passwordEntry,
-		formItems:         formItems,
-		parent:            parent,
-		notify:            binding.NewString(),
-	}
+		secretsReader: &secretsReader,
+		Dialog:        nil,
+		PasswordEntry: passwordEntry,
+		formItems:     formItems,
+		parent:        parent,
+		notify:        binding.NewString(),
+	}, &secretsReader
 
 }
 
@@ -49,9 +46,9 @@ func (m *MasterPasswordDialog) AddListener(l binding.DataListener) {
 func (m *MasterPasswordDialog) ShowDialog(uriID string, contentInBytes *[]byte) {
 	m.Dialog = dialog.NewForm("Enter master password", "Confirm", "Cancel", m.formItems, func(valid bool) {
 		if valid {
-			m.DbPathAndPassword.ContentInBytes = *contentInBytes
-			m.DbPathAndPassword.UriID = uriID
-			m.DbPathAndPassword.Password = m.PasswordEntry.Text
+			m.secretsReader.ContentInBytes = *contentInBytes
+			m.secretsReader.UriID = uriID
+			m.secretsReader.Password = m.PasswordEntry.Text
 			m.PasswordEntry.Text = ""
 			err := m.notify.Set(uniuri.New())
 			if err != nil {

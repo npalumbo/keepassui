@@ -1,6 +1,7 @@
 package ui_test
 
 import (
+	"keepassui/internal/secretsreader"
 	"keepassui/internal/ui"
 	"testing"
 	"time"
@@ -13,7 +14,7 @@ import (
 func TestMasterPasswordDialog_Render(t *testing.T) {
 	w := test.NewWindow(container.NewWithoutLayout())
 	contentInBytes := make([]byte, 5)
-	masterPasswordDialog := ui.CreateDialog(&ui.DBPathAndPassword{}, w)
+	masterPasswordDialog, _ := ui.CreateDialog(w)
 	w.Resize(fyne.NewSize(600, 600))
 
 	masterPasswordDialog.ShowDialog("file://path", &contentInBytes)
@@ -24,38 +25,32 @@ func TestMasterPasswordDialog_Render(t *testing.T) {
 func TestMasterPasswordDialog_fillIn_And_Submit(t *testing.T) {
 	w := test.NewWindow(container.NewWithoutLayout())
 	contentInBytes := make([]byte, 5)
-	dbPathAndPassword := &ui.DBPathAndPassword{}
-	masterPasswordDialog := ui.CreateDialog(dbPathAndPassword, w)
+	masterPasswordDialog, secretsReader := ui.CreateDialog(w)
 	w.Resize(fyne.NewSize(600, 600))
 
 	masterPasswordDialog.ShowDialog("file://fakeKeypassDBFilePath", &contentInBytes)
 
 	test.Type(masterPasswordDialog.PasswordEntry, "thePassword")
 
-	if masterPasswordDialog.DbPathAndPassword.UriID != "" {
-		t.Error("UriID from DBPathAndPassword should be empty string on start")
+	if secretsReader.GetUriID() != "" {
+		t.Error("UriID from secretsReader should be empty string on start")
 	}
 
 	masterPasswordDialog.Dialog.Submit()
 
-	if masterPasswordDialog.DbPathAndPassword.UriID == "" {
-		t.Error("UriID from DBPathAndPassword should not be empty string after submit")
+	if secretsReader.GetUriID() == "" {
+		t.Error("UriID from secretsReader should not be empty string after submit")
 	}
 
-	data := *masterPasswordDialog.DbPathAndPassword
-	if data.UriID == "" || data.UriID != "file://fakeKeypassDBFilePath" {
+	if secretsReader.GetUriID() != "file://fakeKeypassDBFilePath" {
 		t.Error("Expecting this URI: file://fakeKeypassDBFilePath")
-	}
-	if data.Password == "" || data.Password != "thePassword" {
-		t.Error("Expecting password to be thePassword")
 	}
 }
 
 func TestMasterPasswordDialog_Should_Not_Show_A_Previously_Entered_Password(t *testing.T) {
 	w := test.NewWindow(container.NewWithoutLayout())
 	contentInBytes := make([]byte, 5)
-	dbPathAndPassword := &ui.DBPathAndPassword{}
-	masterPasswordDialog := ui.CreateDialog(dbPathAndPassword, w)
+	masterPasswordDialog, _ := ui.CreateDialog(w)
 	w.Resize(fyne.NewSize(600, 600))
 
 	masterPasswordDialog.ShowDialog("file://fakeKeypassDBFilePath", &contentInBytes)
@@ -75,14 +70,13 @@ func TestMasterPasswordDialog_Should_Not_Show_A_Previously_Entered_Password(t *t
 func TestMasterPasswordDialog_Calls_Listener(t *testing.T) {
 	w := test.NewWindow(container.NewWithoutLayout())
 	contentInBytes := make([]byte, 5)
-	dbPathAndPassword := &ui.DBPathAndPassword{}
-	masterPasswordDialog := ui.CreateDialog(dbPathAndPassword, w)
+	masterPasswordDialog, secretsReader := ui.CreateDialog(w)
 	w.Resize(fyne.NewSize(600, 600))
 	masterPasswordDialog.ShowDialog("file://fakeKeypassDBFilePath", &contentInBytes)
 
 	test.Type(masterPasswordDialog.PasswordEntry, "thePassword")
 
-	listener := &fakeListener{dataHasChangedToExpectedValues: false, dbPathAndPassword: masterPasswordDialog.DbPathAndPassword}
+	listener := &fakeListener{dataHasChangedToExpectedValues: false, secretsReader: secretsReader.(*secretsreader.DefaultSecretsReader)}
 
 	masterPasswordDialog.AddListener(listener)
 
@@ -101,11 +95,11 @@ func TestMasterPasswordDialog_Calls_Listener(t *testing.T) {
 
 type fakeListener struct {
 	dataHasChangedToExpectedValues bool
-	dbPathAndPassword              *ui.DBPathAndPassword
+	secretsReader                  *secretsreader.DefaultSecretsReader
 }
 
 func (f *fakeListener) DataChanged() {
-	data := *f.dbPathAndPassword
+	data := *f.secretsReader
 	if data.UriID == "file://fakeKeypassDBFilePath" && data.Password == "thePassword" {
 		f.dataHasChangedToExpectedValues = true
 	}

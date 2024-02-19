@@ -1,14 +1,14 @@
-package keepass_test
+package secretsdb_test
 
 import (
-	"keepassui/internal/keepass"
+	"keepassui/internal/secretsdb"
 	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_ReadEntriesFromContentGroupedByPath(t *testing.T) {
+func Test_ReadSecretsDBFromDBBytes(t *testing.T) {
 
 	bytesContent, err := os.ReadFile("testdata/files/db.kdbx")
 
@@ -16,9 +16,7 @@ func Test_ReadEntriesFromContentGroupedByPath(t *testing.T) {
 		t.Fatal("Could not find test DB")
 	}
 
-	cipheredKeepassDB := keepass.CipheredKeepassDB{DBBytes: bytesContent, Password: "keepassui"}
-
-	secretsDB, err := cipheredKeepassDB.ReadEntriesFromContentGroupedByPath()
+	secretsDB, err := secretsdb.ReadSecretsDBFromDBBytes(bytesContent, "keepassui")
 
 	entriesGroupedByPath := secretsDB.EntriesByPath
 	pathsInOrder := secretsDB.PathsInOrder
@@ -46,42 +44,42 @@ func Test_ReadEntriesFromContentGroupedByPath(t *testing.T) {
 	assert.Equal(t, 2, len(entriesForGroup1))
 	assert.Equal(t, 1, len(entriesForGroup2))
 
-	assert.Contains(t, entriesForRoot, keepass.SecretEntry{
+	assert.Contains(t, entriesForRoot, secretsdb.SecretEntry{
 		Group: "Root", Title: "keepassui example",
 		Username: "keepassui", Password: "keepassui_password",
 		Url: "https://fakekeepassuiurl.com", Notes: "This is an example", Path: []string{"Root"},
 	})
 
-	assert.Contains(t, entriesForRoot, keepass.SecretEntry{
+	assert.Contains(t, entriesForRoot, secretsdb.SecretEntry{
 		Group: "Root", Title: "group 1",
 		Notes: "", Path: []string{"Root"}, IsGroup: true,
 	})
 
-	assert.Contains(t, entriesForRoot, keepass.SecretEntry{
+	assert.Contains(t, entriesForRoot, secretsdb.SecretEntry{
 		Group: "Root", Title: "group 2",
 		Notes: "", Path: []string{"Root"}, IsGroup: true,
 	})
 
-	assert.Contains(t, entriesForGroup1, keepass.SecretEntry{
+	assert.Contains(t, entriesForGroup1, secretsdb.SecretEntry{
 		Group: "Root|group 1", Title: "entry_inside_group1",
 		Username: "user_in_group1", Password: "password_in_group_1",
 		Url: "https://ingroup1.com/", Notes: "", Path: []string{"Root", "group 1"},
 	})
 
-	assert.Contains(t, entriesForGroup1, keepass.SecretEntry{
+	assert.Contains(t, entriesForGroup1, secretsdb.SecretEntry{
 		Group: "Root|group 1", Title: "entry_2_in_group_1",
 		Username: "entry2_group1_username", Password: "entry2_group1_password",
 		Url: "entry2_group1_url", Notes: "", Path: []string{"Root", "group 1"},
 	})
 
-	assert.Contains(t, entriesForGroup2, keepass.SecretEntry{
+	assert.Contains(t, entriesForGroup2, secretsdb.SecretEntry{
 		Group: "Root|group 2", Title: "entry_in_group2",
 		Username: "user_in_group2", Password: "password_in_group2",
 		Url: "https://group2.com", Notes: "", Path: []string{"Root", "group 2"},
 	})
 }
 
-func Test_ReadEntriesFromContentGroupedByPath_Broken_File(t *testing.T) {
+func Test_ReadSecretsDBFromDBBytes_Broken_File(t *testing.T) {
 
 	bytesContent, err := os.ReadFile("testdata/files/db_broken.kdbx")
 
@@ -89,9 +87,7 @@ func Test_ReadEntriesFromContentGroupedByPath_Broken_File(t *testing.T) {
 		t.Fatal("Could not find test DB")
 	}
 
-	cipheredKeepassDB := keepass.CipheredKeepassDB{DBBytes: bytesContent, Password: "keepassui"}
-
-	secretsDB, err := cipheredKeepassDB.ReadEntriesFromContentGroupedByPath()
+	secretsDB, err := secretsdb.ReadSecretsDBFromDBBytes(bytesContent, "keepassui")
 
 	if err == nil {
 		t.Fatal("We expect an error in this test because the DB file is broken")
@@ -112,9 +108,7 @@ func Test_writeDBBytes(t *testing.T) {
 		t.Error("Should not error")
 	}
 
-	cipheredKeepassDB := keepass.CipheredKeepassDB{DBBytes: bytes, Password: "master"}
-
-	secretsDBReadFromNewDBBytes, err := cipheredKeepassDB.ReadEntriesFromContentGroupedByPath()
+	secretsDBReadFromNewDBBytes, err := secretsdb.ReadSecretsDBFromDBBytes(bytes, "master")
 
 	if err != nil {
 		t.Error("Should be able to read secrets")
@@ -124,9 +118,9 @@ func Test_writeDBBytes(t *testing.T) {
 }
 
 func Test_AddSecretEntryInANewPath(t *testing.T) {
-	secretsDB := keepass.SecretsDB{PathsInOrder: []string{}, EntriesByPath: make(map[string][]keepass.SecretEntry)}
+	secretsDB := secretsdb.SecretsDB{PathsInOrder: []string{}, EntriesByPath: make(map[string][]secretsdb.SecretEntry)}
 
-	secretsDB.AddSecretEntry(keepass.SecretEntry{
+	secretsDB.AddSecretEntry(secretsdb.SecretEntry{
 		Group: "", Title: "Root",
 		Notes: "Notes are important", Path: []string{}, IsGroup: true,
 	})
@@ -155,7 +149,7 @@ func Test_AddSecretEntryInANewPath(t *testing.T) {
 func Test_AddSecretEntryInExistingPath(t *testing.T) {
 	secretsDB := secretsDBForTesting()
 
-	secretsDB.AddSecretEntry(keepass.SecretEntry{
+	secretsDB.AddSecretEntry(secretsdb.SecretEntry{
 		Group: "Root|G1|G2", Title: "second_entry_in_RG2",
 		Username: "second_user_in_RG2", Password: "second_password_in_RG2",
 		Url: "https://secondRG1G2.com", Notes: "", Path: []string{"Root", "G1", "G2"},
@@ -194,7 +188,7 @@ func Test_AddSecretEntryInExistingPath(t *testing.T) {
 func Test_ModifySecretEntryInExistingPath(t *testing.T) {
 	secretsDB := secretsDBForTesting()
 
-	secretsDB.AddSecretEntry(keepass.SecretEntry{
+	secretsDB.AddSecretEntry(secretsdb.SecretEntry{
 		Group: "Root|G1|G2", Title: "entry_in_RG2",
 		Username: "updated_user_in_RG2", Password: "updated_password_in_RG2",
 		Url: "https://updatedRG1G2.com", Notes: "", Path: []string{"Root", "G1", "G2"},
@@ -224,7 +218,7 @@ func Test_ModifySecretEntryInExistingPath(t *testing.T) {
 func TestDeleteSecretEntry_ShouldNotDeleteAnEntryThatDoesntExist(t *testing.T) {
 	secretsDB := secretsDBForTesting()
 
-	deleted := secretsDB.DeleteSecretEntry(keepass.SecretEntry{
+	deleted := secretsDB.DeleteSecretEntry(secretsdb.SecretEntry{
 		Group: "Root|G1", Title: "non_existing_entry_in_RG1",
 		Username: "user_in_RG1", Password: "password_in_RG1",
 		Url: "https://RG1.com", Notes: "", Path: []string{"Root", "G1"},
@@ -246,7 +240,7 @@ func TestDeleteSecretEntry_ShouldDeleteAnEntryThatExists(t *testing.T) {
 
 	assert.Equal(t, []string{"Root", "Root|G1", "Root|G1|G2"}, secretsDB.PathsInOrder)
 
-	deleted := secretsDB.DeleteSecretEntry(keepass.SecretEntry{
+	deleted := secretsDB.DeleteSecretEntry(secretsdb.SecretEntry{
 		Group: "Root|G1", Title: "entry_in_RG1_2",
 		Username: "user_in_RG1_2", Password: "password_in_RG1_2",
 		Url: "https://RG1_2.com", Notes: "", Path: []string{"Root", "G1"},
@@ -284,7 +278,7 @@ func TestDeleteSecretEntry_ShouldDeleteGroupAndItsContents(t *testing.T) {
 	assert.Equal(t, "entry_in_RG1_2", entriesForRootG1[1].Title)
 	assert.Equal(t, "G2", entriesForRootG1[2].Title)
 
-	deleted := secretsDB.DeleteSecretEntry(keepass.SecretEntry{
+	deleted := secretsDB.DeleteSecretEntry(secretsdb.SecretEntry{
 		Group: "Root", Title: "G1",
 		Notes: "", Path: []string{"Root"}, IsGroup: true,
 	})
@@ -304,10 +298,10 @@ func TestDeleteSecretEntry_ShouldDeleteGroupAndItsContents(t *testing.T) {
 	assert.Equal(t, []string{"Root"}, secretsDB.PathsInOrder)
 }
 
-func secretsDBForTesting() keepass.SecretsDB {
-	entriesByPath := make(map[string][]keepass.SecretEntry)
+func secretsDBForTesting() secretsdb.SecretsDB {
+	entriesByPath := make(map[string][]secretsdb.SecretEntry)
 
-	entriesByPath["Root"] = []keepass.SecretEntry{
+	entriesByPath["Root"] = []secretsdb.SecretEntry{
 		{
 			Group: "Root", Title: "entry_in_root",
 			Username: "user_in_root", Password: "password_in_root",
@@ -319,7 +313,7 @@ func secretsDBForTesting() keepass.SecretsDB {
 		},
 	}
 
-	entriesByPath["Root|G1"] = []keepass.SecretEntry{
+	entriesByPath["Root|G1"] = []secretsdb.SecretEntry{
 		{
 			Group: "Root|G1", Title: "entry_in_RG1",
 			Username: "user_in_RG1", Password: "password_in_RG1",
@@ -336,7 +330,7 @@ func secretsDBForTesting() keepass.SecretsDB {
 		},
 	}
 
-	entriesByPath["Root|G1|G2"] = []keepass.SecretEntry{
+	entriesByPath["Root|G1|G2"] = []secretsdb.SecretEntry{
 		{
 			Group: "Root|G1|G2", Title: "entry_in_RG2",
 			Username: "user_in_RG2", Password: "password_in_RG2",
@@ -344,5 +338,5 @@ func secretsDBForTesting() keepass.SecretsDB {
 		},
 	}
 
-	return keepass.SecretsDB{PathsInOrder: []string{"Root", "Root|G1", "Root|G1|G2"}, EntriesByPath: entriesByPath}
+	return secretsdb.SecretsDB{PathsInOrder: []string{"Root", "Root|G1", "Root|G1|G2"}, EntriesByPath: entriesByPath}
 }

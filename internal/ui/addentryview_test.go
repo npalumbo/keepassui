@@ -1,16 +1,15 @@
 package ui_test
 
 import (
-	"keepassui/internal/keepass"
+	mock_secretsreader "keepassui/internal/mocks/secretsreader"
 	mocks_ui "keepassui/internal/mocks/ui"
+	"keepassui/internal/secretsdb"
 	"keepassui/internal/ui"
-	"slices"
 	"testing"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/test"
-	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
 
@@ -19,14 +18,12 @@ func TestAddEntryShowsDisabledConfirmButtonWhenNotFullyPopulated(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	stagerController := mocks_ui.NewMockStagerController(mockCtrl)
-	addEntryView := ui.CreateAddEntryView("prevousScreen", stagerController)
+	addEntryView := ui.CreateAddEntryView(nil, "prevousScreen", stagerController)
 
-	templateSecret := keepass.SecretEntry{Path: []string{"path 1"}, Group: "path 1", IsGroup: false}
+	templateSecret := secretsdb.SecretEntry{Path: []string{"path 1"}, Group: "path 1", IsGroup: false}
 	stagerController.EXPECT().TakeOver("AddEntry").Times(1).Return(nil)
 
-	secretsDB := secretsDBForTesting()
-
-	addEntryView.AddEntry(&templateSecret, &secretsDB)
+	addEntryView.AddEntry(&templateSecret)
 
 	w := test.NewWindow(container.NewWithoutLayout())
 
@@ -42,21 +39,19 @@ func TestAddEntryTapOnCancelTakesUsToThePreviousScreenWithoutChangingSecretsDB(t
 	defer mockCtrl.Finish()
 
 	stagerController := mocks_ui.NewMockStagerController(mockCtrl)
-	addEntryView := ui.CreateAddEntryView("previousScreen", stagerController)
+	mockSecretsReader := mock_secretsreader.NewMockSecretReader(mockCtrl)
+	addEntryView := ui.CreateAddEntryView(mockSecretsReader, "previousScreen", stagerController)
 
-	templateSecret := keepass.SecretEntry{Path: []string{"path 1"}, Group: "path 1", IsGroup: false}
+	templateSecret := secretsdb.SecretEntry{Path: []string{"path 1"}, Group: "path 1", IsGroup: false}
 	stagerController.EXPECT().TakeOver("AddEntry").Times(1).Return(nil)
+	mockSecretsReader.EXPECT().AddSecretEntry(&templateSecret).Times(0)
 
-	secretsDB := secretsDBForTesting()
-
-	addEntryView.AddEntry(&templateSecret, &secretsDB)
+	addEntryView.AddEntry(&templateSecret)
 
 	stagerController.EXPECT().TakeOver("previousScreen").Times(1)
 
 	// Ideally we would use test.Tap() on the Cancel button but the button is not reachable from widget.Form
 	addEntryView.SecretForm.DetailsForm.OnCancel()
-
-	assert.Equal(t, secretsDBForTesting(), secretsDB)
 }
 
 func TestAddEntryShowsEnabledConfirmButtonWhenFullyPopulated(t *testing.T) {
@@ -64,18 +59,16 @@ func TestAddEntryShowsEnabledConfirmButtonWhenFullyPopulated(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	stagerController := mocks_ui.NewMockStagerController(mockCtrl)
-	addEntryView := ui.CreateAddEntryView("prevousScreen", stagerController)
+	addEntryView := ui.CreateAddEntryView(nil, "prevousScreen", stagerController)
 
-	templateSecret := keepass.SecretEntry{
+	templateSecret := secretsdb.SecretEntry{
 		Path: []string{"path 1"}, Group: "path 1", IsGroup: false,
 	}
 	stagerController.EXPECT().TakeOver("AddEntry").Times(1).Return(nil)
 
-	secretsDB := secretsDBForTesting()
+	addEntryView.AddEntry(&templateSecret)
 
-	addEntryView.AddEntry(&templateSecret, &secretsDB)
-
-	addEntryView.SecretForm.TypeSecretEntryInForm(keepass.SecretEntry{
+	addEntryView.SecretForm.TypeSecretEntryInForm(secretsdb.SecretEntry{
 		Title: "aTitle", Username: "aUsername", Password: "aPassword", Url: "aUrl", Notes: "someNotes"},
 	)
 
@@ -93,44 +86,56 @@ func TestAddEntryTapOnSubmitTakesUsToThePreviousScreenAndAddsEntryToSecretsDB(t 
 	defer mockCtrl.Finish()
 
 	stagerController := mocks_ui.NewMockStagerController(mockCtrl)
-	addEntryView := ui.CreateAddEntryView("previousScreen", stagerController)
+	mockSecretsReader := mock_secretsreader.NewMockSecretReader(mockCtrl)
+	addEntryView := ui.CreateAddEntryView(mockSecretsReader, "previousScreen", stagerController)
 
-	templateSecret := keepass.SecretEntry{
+	templateSecret := secretsdb.SecretEntry{
 		Path: []string{"path 1"}, Group: "path 1", IsGroup: false,
 	}
 	stagerController.EXPECT().TakeOver("AddEntry").Times(1).Return(nil)
 
-	secretsDB := secretsDBForTesting()
-	entriesForPath1 := secretsDB.EntriesByPath["path 1"]
+	addEntryView.AddEntry(&templateSecret)
 
-	addEntryView.AddEntry(&templateSecret, &secretsDB)
-	assert.Equal(t, 1, len(entriesForPath1), "Starts with one entry")
-
-	matchingEntryPredicate := func(entry keepass.SecretEntry) bool {
-		return entry.Title == "aTitle" &&
-			entry.Username == "aUsername" && entry.Password == "aPassword" &&
-			entry.Url == "aUrl" && entry.Notes == "someNotes"
-	}
-
-	indexEntryWithNameATitle := slices.IndexFunc(entriesForPath1, matchingEntryPredicate)
-
-	assert.Equal(t, -1, indexEntryWithNameATitle, "Not found any entry with title: aTitle, etc")
-
-	addEntryView.SecretForm.TypeSecretEntryInForm(keepass.SecretEntry{
+	addEntryView.SecretForm.TypeSecretEntryInForm(secretsdb.SecretEntry{
 		Title: "aTitle", Username: "aUsername", Password: "aPassword", Url: "aUrl", Notes: "someNotes"},
 	)
+
+	mockSecretsReader.EXPECT().AddSecretEntry(secretsdb.SecretEntry{
+		Path: []string{"path 1"}, Group: "path 1", IsGroup: false,
+		Title: "aTitle", Username: "aUsername", Password: "aPassword", Url: "aUrl", Notes: "someNotes"}).Times(1)
 
 	stagerController.EXPECT().TakeOver("previousScreen").Times(1).Return(nil)
 
 	// Ideally we would use test.Tap() on the Confirm button but the button is not reachable from widget.Form
 	addEntryView.SecretForm.DetailsForm.OnSubmit()
+}
 
-	assert.NotEqual(t, secretsDBForTesting(), secretsDB, "Is not equals to the original secretsDB")
-	entriesForPath1 = secretsDB.EntriesByPath["path 1"]
+func TestModifyEntryTapOnSubmitTakesUsToThePreviousScreenAndModifiesEntryToSecretsDB(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
 
-	assert.Equal(t, 2, len(entriesForPath1), "It has now 2 entries")
+	stagerController := mocks_ui.NewMockStagerController(mockCtrl)
+	mockSecretsReader := mock_secretsreader.NewMockSecretReader(mockCtrl)
+	modifyEntryView := ui.CreateAddEntryView(mockSecretsReader, "previousScreen", stagerController)
 
-	indexEntryWithNameATitle = slices.IndexFunc(entriesForPath1, matchingEntryPredicate)
+	templateSecret := secretsdb.SecretEntry{
+		Path: []string{"path 1"}, Group: "path 1", IsGroup: false,
+		Title: "aTitle", Username: "aUsername", Password: "aPassword", Url: "aUrl", Notes: "someNotes",
+	}
+	stagerController.EXPECT().TakeOver("AddEntry").Times(1).Return(nil)
 
-	assert.Equal(t, 1, indexEntryWithNameATitle, "An entry with title: aTitle, etc in position 1")
+	modifyEntryView.ModifyEntry(&templateSecret)
+
+	modifyEntryView.SecretForm.TypeSecretEntryInForm(secretsdb.SecretEntry{
+		Title: "aModifiedTitle", Username: "aModifiedUsername", Password: "aModifiedPassword", Url: "aModifiedUrl", Notes: "someModifiedNotes"},
+	)
+
+	mockSecretsReader.EXPECT().ModifySecretEntry("aTitle", "path 1", false, secretsdb.SecretEntry{
+		Path: []string{"path 1"}, Group: "path 1", IsGroup: false,
+		Title: "aModifiedTitle", Username: "aModifiedUsername", Password: "aModifiedPassword", Url: "aModifiedUrl", Notes: "someModifiedNotes"}).Times(1)
+
+	stagerController.EXPECT().TakeOver("previousScreen").Times(1).Return(nil)
+
+	// Ideally we would use test.Tap() on the Confirm button but the button is not reachable from widget.Form
+	modifyEntryView.SecretForm.DetailsForm.OnSubmit()
 }

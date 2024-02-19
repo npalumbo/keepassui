@@ -2,7 +2,7 @@ package ui
 
 import (
 	"errors"
-	"keepassui/internal/keepass"
+	"keepassui/internal/secretsdb"
 	keepassuiwidget "keepassui/internal/widget"
 
 	"fyne.io/fyne/v2"
@@ -21,7 +21,7 @@ type SecretForm struct {
 	FormContainer *fyne.Container
 }
 
-func (f *SecretForm) UpdateEntry(entry *keepass.SecretEntry) {
+func (f *SecretForm) UpdateEntry(entry *secretsdb.SecretEntry) {
 	entry.Title = f.titleEntry.Text
 	entry.Username = f.usernameEntry.Text
 	entry.Password = f.passwordEntry.Text
@@ -29,7 +29,7 @@ func (f *SecretForm) UpdateEntry(entry *keepass.SecretEntry) {
 	entry.Notes = f.notesEntry.Text
 }
 
-func (f *SecretForm) UpdateForm(entry keepass.SecretEntry) {
+func (f *SecretForm) UpdateForm(entry secretsdb.SecretEntry) {
 	f.titleEntry.Text = entry.Title
 	f.usernameEntry.Text = entry.Username
 	f.passwordEntry.Text = entry.Password
@@ -92,7 +92,12 @@ func createValidator(fieldName string) fyne.StringValidator {
 }
 
 // Test Helper that doesn't require us to force validation
-func (f *SecretForm) TypeSecretEntryInForm(entry keepass.SecretEntry) {
+func (f *SecretForm) TypeSecretEntryInForm(entry secretsdb.SecretEntry) {
+	f.titleEntry.Text = ""
+	f.usernameEntry.Text = ""
+	f.passwordEntry.Text = ""
+	f.urlEntry.Text = ""
+	f.notesEntry.Text = ""
 	test.Type(f.titleEntry, entry.Title)
 	test.Type(f.usernameEntry, entry.Username)
 	test.Type(f.passwordEntry, entry.Password)

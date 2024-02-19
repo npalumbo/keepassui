@@ -2,7 +2,8 @@ package ui
 
 import (
 	"errors"
-	"keepassui/internal/keepass"
+	"keepassui/internal/secretsdb"
+	"keepassui/internal/secretsreader"
 	"log/slog"
 	"strings"
 
@@ -22,44 +23,38 @@ type NavView struct {
 	SaveButton              *widget.Button
 	GroupCreateButton       *widget.Button
 	SecretEntryCreateButton *widget.Button
+	GoBackButton            *widget.Button
 	breadCrumbs             *fyne.Container
 	generalButtons          *fyne.Container
 	listPanel               *fyne.Container
-	detailedView            *DetailedView
 	addEntryView            EntryUpdater
 	parent                  fyne.Window
-	dbPathAndPassword       *DBPathAndPassword
-	secretReaderResolver    SecretReaderResolver
+	secretsReader           secretsreader.SecretReader
 	currentPath             string
-	secretsDB               *keepass.SecretsDB
 }
 
 func (n *NavView) DataChanged() {
-	if n.dbPathAndPassword.UriID == "" {
+	if n.secretsReader.GetUriID() == "" {
 		return
 	}
 
-	secretReader := n.secretReaderResolver.GetSecretReader(*n.dbPathAndPassword)
-
-	secretsDB, err := secretReader.ReadEntriesFromContentGroupedByPath()
+	err := n.secretsReader.ReadEntriesFromContentGroupedByPath()
 
 	if err != nil {
 		dialog.ShowError(errors.New("Error reading secrets: "+err.Error()), n.parent)
 		return
 	}
 
-	n.secretsDB = &secretsDB
-
-	n.UpdateNavView(secretsDB.PathsInOrder[0])
+	n.UpdateNavView(n.secretsReader.GetFirstPath())
 
 	n.SaveButton.OnTapped = func() {
-		bytes, err := secretsDB.WriteDBBytes(n.dbPathAndPassword.Password)
+		bytes, err := n.secretsReader.WriteDBBytes()
 
 		if err != nil {
 			dialog.ShowError(err, n.parent)
 			return
 		}
-		fileSaveDialog := createFileSaveDialog(bytes, n.dbPathAndPassword.UriID, n.parent)
+		fileSaveDialog := createFileSaveDialog(bytes, n.secretsReader.GetUriID(), n.parent)
 
 		if fileSaveDialog != nil {
 			fileSaveDialog.Show()
@@ -143,9 +138,8 @@ func getLocationURI(fURI fyne.URI) (fyne.ListableURI, error) {
 }
 
 func (n *NavView) UpdateNavView(path string) {
-	listOfSecretsForPath := n.secretsDB.EntriesByPath[path]
 
-	list, err := createListNav(listOfSecretsForPath, n.detailedView, n.parent, n)
+	list, err := createListNav(path, n.parent, n)
 	list.Refresh()
 
 	if err != nil {
@@ -154,7 +148,6 @@ func (n *NavView) UpdateNavView(path string) {
 	}
 
 	n.breadCrumbs.RemoveAll()
-	n.breadCrumbs.Add(widget.NewLabel("Path: "))
 
 	pathComponents := strings.Split(path, "|")
 	pathAcc := []string{}
@@ -170,6 +163,17 @@ func (n *NavView) UpdateNavView(path string) {
 		n.breadCrumbs.Add(pathComponentButton)
 	}
 
+	if len(pathComponents) < 2 {
+		n.GoBackButton.Disable()
+	} else {
+		n.GoBackButton.Enable()
+		n.GoBackButton.OnTapped = func() {
+			index := strings.LastIndex(path, "|")
+			backPath := path[:index]
+			n.UpdateNavView(backPath)
+		}
+	}
+
 	n.listPanel.RemoveAll()
 	n.listPanel.Add(list)
 	n.listPanel.Refresh()
@@ -180,8 +184,8 @@ func (n *NavView) UpdateNavView(path string) {
 		groupNameEntry.Validator = createValidator("Group")
 		form := dialog.NewForm("Add new group", "Confirm", "Cancel", []*widget.FormItem{widget.NewFormItem("Name", groupNameEntry)}, func(valid bool) {
 			if valid {
-				newGroup := keepass.SecretEntry{Path: pathComponents, Group: path, Title: groupNameEntry.Text, IsGroup: true}
-				n.secretsDB.AddSecretEntry(newGroup)
+				newGroup := secretsdb.SecretEntry{Path: pathComponents, Group: path, Title: groupNameEntry.Text, IsGroup: true}
+				n.secretsReader.AddSecretEntry(newGroup)
 				n.UpdateNavView(path)
 			}
 		}, n.parent)
@@ -189,20 +193,26 @@ func (n *NavView) UpdateNavView(path string) {
 	}
 
 	n.SecretEntryCreateButton.OnTapped = func() {
-		templateEntry := keepass.SecretEntry{Path: pathComponents, Group: path, IsGroup: false}
-		n.addEntryView.AddEntry(&templateEntry, n.secretsDB)
+		templateEntry := secretsdb.SecretEntry{Path: pathComponents, Group: path, IsGroup: false}
+		n.addEntryView.AddEntry(&templateEntry)
 	}
 }
 
-func createListNav(listOfSecretsForPath []keepass.SecretEntry, detailedView *DetailedView, parent fyne.Window, navView *NavView) (*widget.List, error) {
+func createListNav(path string, parent fyne.Window, navView *NavView) (*widget.List, error) {
+	listOfSecretsForPath := navView.secretsReader.GetEntriesForPath(path)
 	untypedList := binding.NewUntypedList()
 	newList := widget.NewListWithData(untypedList,
 		func() fyne.CanvasObject {
-			copyButton := widget.NewButtonWithIcon("copy", theme.ContentCopyIcon(), func() {})
-			showInfoButton := widget.NewButtonWithIcon("details", theme.InfoIcon(), func() {})
-			openGroupButton := widget.NewButtonWithIcon("open", theme.FolderOpenIcon(), func() {})
-			deleteButton := widget.NewButtonWithIcon("delete", theme.DeleteIcon(), func() {})
-			buttons := container.NewHBox(copyButton, showInfoButton, openGroupButton, deleteButton)
+			copyButton := widget.NewButtonWithIcon("", theme.ContentCopyIcon(), func() {})
+			openGroupButton := widget.NewButtonWithIcon("", theme.FolderOpenIcon(), func() {})
+			editButton := widget.NewButtonWithIcon("", theme.DocumentCreateIcon(), func() {})
+			deleteButton := widget.NewButtonWithIcon("", theme.DeleteIcon(), func() {})
+			buttons := container.NewHBox(
+				container.NewPadded(copyButton),
+				container.NewPadded(openGroupButton),
+				container.NewPadded(editButton),
+				container.NewPadded(deleteButton),
+			)
 			templateLabel := widget.NewLabel("template")
 			iconAndLabel := container.NewHBox(widget.NewIcon(theme.FolderIcon()), templateLabel)
 			container := container.NewBorder(nil, nil, iconAndLabel, buttons, nil)
@@ -218,7 +228,7 @@ func createListNav(listOfSecretsForPath []keepass.SecretEntry, detailedView *Det
 				return
 			}
 
-			secret := untyped.(keepass.SecretEntry)
+			secret := untyped.(secretsdb.SecretEntry)
 			objects := box.Objects
 			iconAndLabel := objects[0].(*fyne.Container)
 
@@ -227,12 +237,14 @@ func createListNav(listOfSecretsForPath []keepass.SecretEntry, detailedView *Det
 			label := iconAndLabel.Objects[1].(*widget.Label)
 
 			buttons := objects[1].(*fyne.Container)
-			copyPasswordButton := buttons.Objects[0].(*widget.Button)
-			showInfoButton := buttons.Objects[1].(*widget.Button)
-			openGroupButton := buttons.Objects[2].(*widget.Button)
-			deleteButton := buttons.Objects[3].(*widget.Button)
+			copyPasswordPaddedContainer := buttons.Objects[0].(*fyne.Container)
+			copyPasswordButton := copyPasswordPaddedContainer.Objects[0].(*widget.Button)
+			openGroupPadddedContainer := buttons.Objects[1].(*fyne.Container)
+			openGroupButton := openGroupPadddedContainer.Objects[0].(*widget.Button)
+			editButton := buttons.Objects[2].(*fyne.Container).Objects[0].(*widget.Button)
+			deleteButton := buttons.Objects[3].(*fyne.Container).Objects[0].(*widget.Button)
 			deleteButton.OnTapped = func() {
-				deleted := navView.secretsDB.DeleteSecretEntry(secret)
+				deleted := navView.secretsReader.DeleteSecretEntry(secret)
 				if deleted {
 					navView.UpdateNavView(secret.Group)
 				}
@@ -241,19 +253,34 @@ func createListNav(listOfSecretsForPath []keepass.SecretEntry, detailedView *Det
 			label.SetText(secret.Title)
 			if secret.IsGroup {
 				icon.SetResource(theme.FolderIcon())
-				copyPasswordButton.Hide()
-				showInfoButton.Hide()
+				copyPasswordPaddedContainer.Hide()
+
+				editButton.OnTapped = func() {
+					groupNameEntry := widget.NewEntry()
+					groupNameEntry.Text = secret.Title
+					groupNameEntry.Validator = createValidator("Group")
+					form := dialog.NewForm("Change group name", "Confirm", "Cancel", []*widget.FormItem{widget.NewFormItem("Name", groupNameEntry)}, func(valid bool) {
+						if valid {
+							originalTitle := secret.Title
+							secret.Title = groupNameEntry.Text
+							navView.secretsReader.ModifySecretEntry(originalTitle, secret.Group, secret.IsGroup, secret)
+							navView.UpdateNavView(path)
+						}
+					}, navView.parent)
+					form.Show()
+				}
+
 				openGroupButton.OnTapped = func() {
 					navView.UpdateNavView(strings.Join([]string{secret.Group, secret.Title}, "|"))
 				}
 			} else {
-				openGroupButton.Hide()
-				icon.SetResource(theme.FileTextIcon())
+				openGroupPadddedContainer.Hide()
+				icon.SetResource(theme.DocumentIcon())
 				copyPasswordButton.OnTapped = func() {
 					parent.Clipboard().SetContent(secret.Password)
 				}
-				showInfoButton.OnTapped = func() {
-					detailedView.ShowDetails(secret)
+				editButton.OnTapped = func() {
+					navView.addEntryView.ModifyEntry(&secret)
 				}
 
 			}
@@ -270,12 +297,20 @@ func createListNav(listOfSecretsForPath []keepass.SecretEntry, detailedView *Det
 	return newList, nil
 }
 
-func CreateNavView(dbPathAndPassword *DBPathAndPassword, addEntryView EntryUpdater, detailedView *DetailedView, parent fyne.Window, stageManager *StageManager, secretReaderResolver SecretReaderResolver) NavView {
+func CreateNavView(secretsReader secretsreader.SecretReader, addEntryView EntryUpdater, parent fyne.Window, stageManager *StageManager) NavView {
 
 	breadCrumbs := container.NewHBox()
 	generalButtons := container.NewHBox()
 
-	navTop := container.NewBorder(nil, nil, breadCrumbs, generalButtons, nil)
+	goBackButton := widget.NewButtonWithIcon("", theme.NavigateBackIcon(), func() {
+
+	})
+
+	breadcrumbsWithBackButton := container.NewBorder(nil, nil, breadCrumbs, goBackButton, nil)
+
+	navTop := container.NewBorder(container.NewPadded(
+		generalButtons,
+	), breadcrumbsWithBackButton, nil, nil, nil)
 
 	saveButton := widget.NewButtonWithIcon("save", theme.DocumentSaveIcon(), func() {
 
@@ -286,9 +321,9 @@ func CreateNavView(dbPathAndPassword *DBPathAndPassword, addEntryView EntryUpdat
 	secretEntryCreateButton := widget.NewButtonWithIcon("new secret", theme.DocumentCreateIcon(), func() {
 
 	})
-	generalButtons.Add(saveButton)
-	generalButtons.Add(secretEntryCreateButton)
-	generalButtons.Add(groupCreateButton)
+	generalButtons.Add(container.NewPadded(saveButton))
+	generalButtons.Add(container.NewPadded(secretEntryCreateButton))
+	generalButtons.Add(container.NewPadded(groupCreateButton))
 
 	listPanel := container.NewStack()
 	navAndListContainer := container.NewBorder(container.NewVBox(navTop, widget.NewSeparator()), nil, nil, nil, listPanel)
@@ -299,11 +334,10 @@ func CreateNavView(dbPathAndPassword *DBPathAndPassword, addEntryView EntryUpdat
 		breadCrumbs:             breadCrumbs,
 		listPanel:               listPanel,
 		addEntryView:            addEntryView,
-		detailedView:            detailedView,
 		parent:                  parent,
-		dbPathAndPassword:       dbPathAndPassword,
-		secretReaderResolver:    secretReaderResolver,
+		secretsReader:           secretsReader,
 		currentPath:             "",
+		GoBackButton:            goBackButton,
 		generalButtons:          generalButtons,
 		navTop:                  navTop,
 		SaveButton:              saveButton,

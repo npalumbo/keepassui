@@ -10,7 +10,7 @@
 package mock_ui
 
 import (
-	keepass "keepassui/internal/keepass"
+	secretsdb "keepassui/internal/secretsdb"
 	reflect "reflect"
 
 	gomock "go.uber.org/mock/gomock"
@@ -40,13 +40,25 @@ func (m *MockEntryUpdater) EXPECT() *MockEntryUpdaterMockRecorder {
 }
 
 // AddEntry mocks base method.
-func (m *MockEntryUpdater) AddEntry(templateEntry *keepass.SecretEntry, secretsDB *keepass.SecretsDB) {
+func (m *MockEntryUpdater) AddEntry(templateEntry *secretsdb.SecretEntry) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "AddEntry", templateEntry, secretsDB)
+	m.ctrl.Call(m, "AddEntry", templateEntry)
 }
 
 // AddEntry indicates an expected call of AddEntry.
-func (mr *MockEntryUpdaterMockRecorder) AddEntry(templateEntry, secretsDB any) *gomock.Call {
+func (mr *MockEntryUpdaterMockRecorder) AddEntry(templateEntry any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddEntry", reflect.TypeOf((*MockEntryUpdater)(nil).AddEntry), templateEntry, secretsDB)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddEntry", reflect.TypeOf((*MockEntryUpdater)(nil).AddEntry), templateEntry)
+}
+
+// ModifyEntry mocks base method.
+func (m *MockEntryUpdater) ModifyEntry(templateEntry *secretsdb.SecretEntry) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "ModifyEntry", templateEntry)
+}
+
+// ModifyEntry indicates an expected call of ModifyEntry.
+func (mr *MockEntryUpdaterMockRecorder) ModifyEntry(templateEntry any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ModifyEntry", reflect.TypeOf((*MockEntryUpdater)(nil).ModifyEntry), templateEntry)
 }
