@@ -15,6 +15,8 @@ type StageManager struct {
 
 type StagerController interface {
 	TakeOver(name string) error
+	RegisterStager(stager Stager)
+	GetContainer() *fyne.Container
 }
 
 type DefaultStager struct {
@@ -52,6 +54,10 @@ func (s StageManager) TakeOver(name string) error {
 	s.currentViewContainer.Refresh()
 
 	return nil
+}
+
+func (s StageManager) GetContainer() *fyne.Container {
+	return s.currentViewContainer
 }
 
 func (d *DefaultStager) ExecuteOnTakeOver() {

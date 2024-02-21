@@ -10,6 +10,7 @@
 package mock_ui
 
 import (
+	ui "keepassui/internal/ui"
 	reflect "reflect"
 
 	fyne "fyne.io/fyne/v2"
@@ -37,6 +38,32 @@ func NewMockStagerController(ctrl *gomock.Controller) *MockStagerController {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockStagerController) EXPECT() *MockStagerControllerMockRecorder {
 	return m.recorder
+}
+
+// GetContainer mocks base method.
+func (m *MockStagerController) GetContainer() *fyne.Container {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetContainer")
+	ret0, _ := ret[0].(*fyne.Container)
+	return ret0
+}
+
+// GetContainer indicates an expected call of GetContainer.
+func (mr *MockStagerControllerMockRecorder) GetContainer() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetContainer", reflect.TypeOf((*MockStagerController)(nil).GetContainer))
+}
+
+// RegisterStager mocks base method.
+func (m *MockStagerController) RegisterStager(stager ui.Stager) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "RegisterStager", stager)
+}
+
+// RegisterStager indicates an expected call of RegisterStager.
+func (mr *MockStagerControllerMockRecorder) RegisterStager(stager any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterStager", reflect.TypeOf((*MockStagerController)(nil).RegisterStager), stager)
 }
 
 // TakeOver mocks base method.
