@@ -17,13 +17,14 @@ import (
 )
 
 type NavView struct {
-	stageManager            *StageManager
+	stagerController        StagerController
 	navAndListContainer     *fyne.Container
 	navTop                  *fyne.Container
 	SaveButton              *widget.Button
 	GroupCreateButton       *widget.Button
 	SecretEntryCreateButton *widget.Button
 	GoBackButton            *widget.Button
+	LockDBButton            *widget.Button
 	breadCrumbs             *fyne.Container
 	generalButtons          *fyne.Container
 	listPanel               *fyne.Container
@@ -61,8 +62,8 @@ func (n *NavView) DataChanged() {
 		}
 	}
 
-	if n.stageManager != nil {
-		err := n.stageManager.TakeOver(n.GetStageName())
+	if n.stagerController != nil {
+		err := n.stagerController.TakeOver(n.GetStageName())
 		if err != nil {
 			slog.Error(err.Error())
 		}
@@ -297,7 +298,7 @@ func createListNav(path string, parent fyne.Window, navView *NavView) (*widget.L
 	return newList, nil
 }
 
-func CreateNavView(secretsReader secretsreader.SecretReader, addEntryView EntryUpdater, parent fyne.Window, stageManager *StageManager) NavView {
+func CreateNavView(secretsReader secretsreader.SecretReader, addEntryView EntryUpdater, parent fyne.Window, stagerController StagerController) NavView {
 
 	breadCrumbs := container.NewHBox()
 	generalButtons := container.NewHBox()
@@ -310,7 +311,7 @@ func CreateNavView(secretsReader secretsreader.SecretReader, addEntryView EntryU
 
 	navTop := container.NewBorder(container.NewPadded(
 		generalButtons,
-	), breadcrumbsWithBackButton, nil, nil, nil)
+	), container.NewPadded(breadcrumbsWithBackButton), nil, nil, nil)
 
 	saveButton := widget.NewButtonWithIcon("save", theme.DocumentSaveIcon(), func() {
 
@@ -321,15 +322,23 @@ func CreateNavView(secretsReader secretsreader.SecretReader, addEntryView EntryU
 	secretEntryCreateButton := widget.NewButtonWithIcon("new secret", theme.DocumentCreateIcon(), func() {
 
 	})
+
+	lockDBButton := widget.NewButtonWithIcon("lock db", theme.LogoutIcon(), func() {
+		err := stagerController.TakeOver("Home")
+		if err != nil {
+			dialog.ShowError(err, parent)
+		}
+	})
+
 	generalButtons.Add(container.NewPadded(saveButton))
 	generalButtons.Add(container.NewPadded(secretEntryCreateButton))
 	generalButtons.Add(container.NewPadded(groupCreateButton))
 
-	listPanel := container.NewStack()
-	navAndListContainer := container.NewBorder(container.NewVBox(navTop, widget.NewSeparator()), nil, nil, nil, listPanel)
+	listPanel := container.NewPadded()
+	navAndListContainer := container.NewBorder(container.NewVBox(navTop, widget.NewSeparator()), container.NewPadded(lockDBButton), nil, nil, listPanel)
 
 	return NavView{
-		stageManager:            stageManager,
+		stagerController:        stagerController,
 		navAndListContainer:     navAndListContainer,
 		breadCrumbs:             breadCrumbs,
 		listPanel:               listPanel,
@@ -338,6 +347,7 @@ func CreateNavView(secretsReader secretsreader.SecretReader, addEntryView EntryU
 		secretsReader:           secretsReader,
 		currentPath:             "",
 		GoBackButton:            goBackButton,
+		LockDBButton:            lockDBButton,
 		generalButtons:          generalButtons,
 		navTop:                  navTop,
 		SaveButton:              saveButton,

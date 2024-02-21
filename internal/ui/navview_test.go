@@ -334,3 +334,34 @@ func TestNavView_TapOnEditGroupOpensNewGroupDialog(t *testing.T) {
 
 	test.AssertImageMatches(t, "navView_two_groups_tap_edit_group_button.png", w.Canvas().Capture())
 }
+
+func TestNavView_TapLockDBButtonCallsHome(t *testing.T) {
+	w := test.NewWindow(container.NewWithoutLayout())
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	secretReader := mock_secretsreader.NewMockSecretReader(mockCtrl)
+
+	secretsDBWithTwoGroups := secretsDBWithTwoGroups()
+	secretReader.EXPECT().ReadEntriesFromContentGroupedByPath().Times(1).Return(nil)
+	secretReader.EXPECT().GetUriID().Times(1).Return("file://path")
+	secretReader.EXPECT().GetFirstPath().Times(1).Return("path 1")
+	secretReader.EXPECT().GetEntriesForPath("path 1").Times(1).Return(secretsDBWithTwoGroups.EntriesByPath["path 1"])
+
+	mock_stagercontroller := mocks_ui.NewMockStagerController(mockCtrl)
+
+	navView := ui.CreateNavView(secretReader, nil, w, mock_stagercontroller)
+
+	mock_stagercontroller.EXPECT().TakeOver("NavView").Times(1)
+
+	navView.DataChanged()
+
+	w.SetContent(navView.GetPaintedContainer())
+	w.Resize(fyne.NewSize(600, 600))
+
+	test.AssertImageMatches(t, "navView_two_groups.png", w.Canvas().Capture())
+
+	mock_stagercontroller.EXPECT().TakeOver("Home").Times(1)
+
+	test.Tap(navView.LockDBButton)
+}
