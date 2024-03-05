@@ -93,6 +93,7 @@ func TestAddEntryTapOnSubmitTakesUsToThePreviousScreenAndAddsEntryToSecretsDB(t 
 		Path: []string{"path 1"}, Group: "path 1", IsGroup: false,
 	}
 	stagerController.EXPECT().TakeOver("AddEntry").Times(1).Return(nil)
+	mockSecretsReader.EXPECT().Save().Times(1)
 
 	addEntryView.AddEntry(&templateSecret)
 
@@ -123,6 +124,7 @@ func TestModifyEntryTapOnSubmitTakesUsToThePreviousScreenAndModifiesEntryToSecre
 		Title: "aTitle", Username: "aUsername", Password: "aPassword", Url: "aUrl", Notes: "someNotes",
 	}
 	stagerController.EXPECT().TakeOver("AddEntry").Times(1).Return(nil)
+	mockSecretsReader.EXPECT().Save().Times(1)
 
 	modifyEntryView.ModifyEntry(&templateSecret)
 

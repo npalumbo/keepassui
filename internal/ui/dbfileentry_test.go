@@ -14,7 +14,16 @@ func TestCreateDBFileEntry(t *testing.T) {
 	mainContainer := container.NewVBox()
 	w := test.NewWindow(mainContainer)
 
-	dbFileEntry := ui.CreateDBFileEntry(nil, w)
+	URI, err := storage.ParseURI("file://testdata//files")
+	if err != nil {
+		t.FailNow()
+	}
+	listableURI, err := storage.ListerForURI(URI)
+	if err != nil {
+		t.FailNow()
+	}
+
+	dbFileEntry := ui.CreateDBFileEntryWithLocation(nil, w, listableURI)
 
 	mainContainer.Add(dbFileEntry.Container)
 	w.Resize(fyne.NewSize(600, 600))
@@ -24,16 +33,6 @@ func TestCreateDBFileEntry(t *testing.T) {
 	test.AssertImageMatches(t, "createDBFileEntry.png", w.Canvas().Capture())
 
 	test.Tap(dbFileEntry.FindFileButton)
-
-	URI, err := storage.ParseURI("file://testdata//files")
-	if err != nil {
-		t.FailNow()
-	}
-	listableURI, err := storage.ListerForURI(URI)
-	if err != nil {
-		t.FailNow()
-	}
-	dbFileEntry.FileOpenDialog.SetLocation(listableURI)
 
 	test.AssertImageMatches(t, "dBFileEntry_FindFile_Tapped.png", w.Canvas().Capture())
 

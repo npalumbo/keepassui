@@ -24,13 +24,17 @@ func CreateMainContent(parent fyne.Window, stor fyne.Storage) MainContent {
 	stageManager := CreateStageManager(currentContainer)
 	addEntryView := CreateAddEntryView(secretsReader, "NavView", stageManager)
 	navView := CreateNavView(secretsReader, &addEntryView, parent, &stageManager)
-	homeView := CreateHomeView(&dbFileEntry, stageManager)
+	fileSaver := CreateFileSaver(secretsReader, stageManager, parent)
+	passwordConfirmView := CreatePasswordConfirmView(fileSaver, stageManager, parent)
+	homeView := CreateHomeView(&dbFileEntry, stageManager, parent)
 
 	stageManager.RegisterStager(&homeView)
 	stageManager.RegisterStager(&navView)
 	stageManager.RegisterStager(&addEntryView)
+	stageManager.RegisterStager(&passwordConfirmView)
 
 	masterPasswordDialog.AddListener(&navView)
+	fileSaver.AddListener(&navView)
 
 	return MainContent{
 		HomeView:             homeView,

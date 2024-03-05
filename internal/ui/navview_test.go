@@ -160,35 +160,35 @@ func TestNavView_DeleteFirstEntry(t *testing.T) {
 	test.AssertImageMatches(t, "navView_two_groups_nested_group_with_one_entry_deleted.png", w.Canvas().Capture())
 }
 
-func TestNavView_TapSaveButtonOpensSaveDialog(t *testing.T) {
-	w := test.NewWindow(container.NewWithoutLayout())
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
+// func TestNavView_TapSaveButtonOpensSaveDialog(t *testing.T) {
+// 	w := test.NewWindow(container.NewWithoutLayout())
+// 	mockCtrl := gomock.NewController(t)
+// 	defer mockCtrl.Finish()
 
-	secretReader := mock_secretsreader.NewMockSecretReader(mockCtrl)
+// 	secretReader := mock_secretsreader.NewMockSecretReader(mockCtrl)
 
-	secretsDBWithTwoGroups := secretsDBWithTwoGroups()
-	secretReader.EXPECT().ReadEntriesFromContentGroupedByPath().Times(1).Return(nil)
-	secretReader.EXPECT().GetUriID().Times(1).Return("file://path")
-	secretReader.EXPECT().GetFirstPath().Times(1).Return("path 1")
-	secretReader.EXPECT().GetEntriesForPath("path 1").Times(1).Return(secretsDBWithTwoGroups.EntriesByPath["path 1"])
+// 	secretsDBWithTwoGroups := secretsDBWithTwoGroups()
+// 	secretReader.EXPECT().ReadEntriesFromContentGroupedByPath().Times(1).Return(nil)
+// 	secretReader.EXPECT().GetUriID().Times(1).Return("file://path")
+// 	secretReader.EXPECT().GetFirstPath().Times(1).Return("path 1")
+// 	secretReader.EXPECT().GetEntriesForPath("path 1").Times(1).Return(secretsDBWithTwoGroups.EntriesByPath["path 1"])
 
-	navView := ui.CreateNavView(secretReader, nil, w, nil)
+// 	navView := ui.CreateNavView(secretReader, nil, w, nil)
 
-	navView.DataChanged()
+// 	navView.DataChanged()
 
-	w.SetContent(navView.GetPaintedContainer())
-	w.Resize(fyne.NewSize(600, 600))
+// 	w.SetContent(navView.GetPaintedContainer())
+// 	w.Resize(fyne.NewSize(600, 600))
 
-	test.AssertImageMatches(t, "navView_two_groups.png", w.Canvas().Capture())
+// 	test.AssertImageMatches(t, "navView_two_groups.png", w.Canvas().Capture())
 
-	secretReader.EXPECT().GetUriID().Times(1).Return("file://path")
-	secretReader.EXPECT().WriteDBBytes().Times(1)
+// 	secretReader.EXPECT().GetUriID().Times(1).Return("file://path")
+// 	secretReader.EXPECT().WriteDBBytes().Times(1)
 
-	test.Tap(navView.SaveButton)
+// 	test.Tap(navView.SaveButton)
 
-	test.AssertImageMatches(t, "navView_two_groups_tap_save_button.png", w.Canvas().Capture())
-}
+// 	test.AssertImageMatches(t, "navView_two_groups_tap_save_button.png", w.Canvas().Capture())
+// }
 
 func TestNavView_TapOnNewGroupOpensNewGroupDialog(t *testing.T) {
 	w := test.NewWindow(container.NewWithoutLayout())

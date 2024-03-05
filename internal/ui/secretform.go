@@ -3,7 +3,6 @@ package ui
 import (
 	"errors"
 	"keepassui/internal/secretsdb"
-	keepassuiwidget "keepassui/internal/widget"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -37,21 +36,18 @@ func (f *SecretForm) UpdateForm(entry secretsdb.SecretEntry) {
 	f.notesEntry.Text = entry.Notes
 }
 
-func CreateSecretForm(readOnly bool) SecretForm {
+func CreateSecretForm() SecretForm {
 	titleEntry := widget.NewEntry()
 	passwordEntry := widget.NewPasswordEntry()
-	passwordEntry.ActionItem = keepassuiwidget.NewPasswordRevealerNotDisabled(passwordEntry)
 	urlEntry := widget.NewEntry()
 	notesEntry := widget.NewEntry()
 	userNameEntry := widget.NewEntry()
 
-	if !readOnly {
-		titleEntry.Validator = createValidator("Title")
-		userNameEntry.Validator = createValidator("Username")
-		passwordEntry.Validator = createValidator("Password")
-		urlEntry.Validator = createValidator("URL")
-		notesEntry.Validator = createValidator("Notes")
-	}
+	titleEntry.Validator = createValidator("Title")
+	userNameEntry.Validator = createValidator("Username")
+	passwordEntry.Validator = createValidator("Password")
+	urlEntry.Validator = createValidator("URL")
+	notesEntry.Validator = createValidator("Notes")
 
 	details := widget.NewForm(
 		widget.NewFormItem("Title", titleEntry),
@@ -59,15 +55,6 @@ func CreateSecretForm(readOnly bool) SecretForm {
 		widget.NewFormItem("Password", passwordEntry),
 		widget.NewFormItem("URL", urlEntry),
 		widget.NewFormItem("Notes", notesEntry))
-
-	if readOnly {
-		for _, item := range details.Items {
-			entry, ok := item.Widget.(*widget.Entry)
-			if ok {
-				entry.Disable()
-			}
-		}
-	}
 
 	formContainer := container.NewStack(details)
 

@@ -10,17 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCreateSecretFormReadOnlyFormShowsDisabledEntries(t *testing.T) {
-	secretForm := ui.CreateSecretForm(true)
-
-	w := test.NewWindow(secretForm.FormContainer)
-
-	w.Resize(fyne.Size{Width: 300, Height: 300})
-	test.AssertImageMatches(t, "createSecretForm_ReadOnly_Shows_Disabled_Entries.png", w.Canvas().Capture())
-}
-
 func TestCreateSecretFormNotReadOnlyFormShowsEnabledEntries(t *testing.T) {
-	secretForm := ui.CreateSecretForm(false)
+	secretForm := ui.CreateSecretForm()
 
 	w := test.NewWindow(secretForm.FormContainer)
 
@@ -29,7 +20,7 @@ func TestCreateSecretFormNotReadOnlyFormShowsEnabledEntries(t *testing.T) {
 }
 
 func TestUpdateForm_Shows_Populated_Form_Fields(t *testing.T) {
-	secretForm := ui.CreateSecretForm(false)
+	secretForm := ui.CreateSecretForm()
 
 	secretForm.TypeSecretEntryInForm(secretsdb.SecretEntry{
 		Title:    "aTitle",
@@ -47,7 +38,7 @@ func TestUpdateForm_Shows_Populated_Form_Fields(t *testing.T) {
 }
 
 func TestUpdateEntry_Populates_SecretEntry(t *testing.T) {
-	secretForm := ui.CreateSecretForm(false)
+	secretForm := ui.CreateSecretForm()
 
 	secretForm.TypeSecretEntryInForm(secretsdb.SecretEntry{
 		Title:    "aTitle",

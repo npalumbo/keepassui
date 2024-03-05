@@ -94,12 +94,28 @@ func groupSecrets(secrets []SecretEntry) SecretsDB {
 	secretsGroupedByPath := make(map[string][]SecretEntry)
 	pathsInOrder := []string{}
 
+	if len(secrets) == 0 {
+		return SecretsDB{
+			EntriesByPath: secretsGroupedByPath,
+			PathsInOrder:  []string{"Root"},
+		}
+	}
+
 	for _, p := range secrets {
 		secretsGroupedByPath[p.Group] = append(secretsGroupedByPath[p.Group], p)
 		if !slices.Contains(pathsInOrder, p.Group) {
 			pathsInOrder = append(pathsInOrder, p.Group)
 		}
+		extendedGroupName := strings.Join([]string{p.Group, p.Title}, "|")
+		if p.IsGroup && !slices.Contains(pathsInOrder, extendedGroupName) {
+			pathsInOrder = append(pathsInOrder, extendedGroupName)
+		}
 	}
+
+	slices.SortFunc(pathsInOrder, func(a, b string) int {
+		return len(a) - len(b)
+	})
+
 	return SecretsDB{
 		EntriesByPath: secretsGroupedByPath,
 		PathsInOrder:  pathsInOrder,
@@ -188,8 +204,8 @@ func (secretsDB SecretsDB) WriteDBBytes(masterPassword string) ([]byte, error) {
 					newGroup.Entries = append(newGroup.Entries, entry)
 				}
 			}
-			groupsMap[groupName] = &newGroup
 		}
+		groupsMap[groupName] = &newGroup
 	}
 
 	// append groups to group if relevant
@@ -211,9 +227,12 @@ func (secretsDB SecretsDB) WriteDBBytes(masterPassword string) ([]byte, error) {
 
 						mainGroupToAddSubGroup := groupsMap[groupName]
 						subGroup := groupsMap[subGroupName]
+						if (*mainGroupToAddSubGroup).Groups == nil {
+							(*mainGroupToAddSubGroup).Groups = []gokeepasslib.Group{}
+						}
 						(*mainGroupToAddSubGroup).Groups = append(mainGroupToAddSubGroup.Groups, *subGroup)
+						connectionsMade = append(connectionsMade, groupConnection)
 					}
-					connectionsMade = append(connectionsMade, groupConnection)
 				}
 			}
 		}
@@ -230,8 +249,8 @@ func (secretsDB SecretsDB) WriteDBBytes(masterPassword string) ([]byte, error) {
 		},
 	}
 
-	// Lock entries using stream cipher
 	err := db.LockProtectedEntries()
+
 	if err != nil {
 		return nil, err
 	}
@@ -240,7 +259,7 @@ func (secretsDB SecretsDB) WriteDBBytes(masterPassword string) ([]byte, error) {
 	buf := bytes.NewBuffer([]byte{})
 	keepassEncoder := gokeepasslib.NewEncoder(buf)
 
-	if err = keepassEncoder.Encode(db); err != nil {
+	if err := keepassEncoder.Encode(db); err != nil {
 		return nil, err
 	}
 
