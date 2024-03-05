@@ -35,7 +35,7 @@ func (a *AddEntryView) AddEntry(templateEntry *secretsdb.SecretEntry) {
 }
 
 func addOrModify(a *AddEntryView, templateEntry *secretsdb.SecretEntry, modify bool) {
-	secretForm := CreateSecretForm(false)
+	secretForm := CreateSecretForm()
 	secretForm.UpdateForm(*templateEntry)
 	a.SecretForm = &secretForm
 	secretForm.DetailsForm.OnCancel = func() {
@@ -55,7 +55,13 @@ func addOrModify(a *AddEntryView, templateEntry *secretsdb.SecretEntry, modify b
 		} else {
 			a.secretsReader.ModifySecretEntry(originalTitle, originalGroup, originalIsGroup, *templateEntry)
 		}
-		err := a.stageManager.TakeOver(a.previousStageName)
+
+		err := a.secretsReader.Save()
+		if err != nil {
+			slog.Error(err.Error())
+		}
+
+		err = a.stageManager.TakeOver(a.previousStageName)
 		if err != nil {
 			slog.Error(err.Error())
 		}

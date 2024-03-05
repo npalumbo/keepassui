@@ -51,6 +51,21 @@ func (mr *MockSecretReaderMockRecorder) AddSecretEntry(secretEntry any) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddSecretEntry", reflect.TypeOf((*MockSecretReader)(nil).AddSecretEntry), secretEntry)
 }
 
+// CreateEmptyDBBytes mocks base method.
+func (m *MockSecretReader) CreateEmptyDBBytes(masterPassword string) ([]byte, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateEmptyDBBytes", masterPassword)
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateEmptyDBBytes indicates an expected call of CreateEmptyDBBytes.
+func (mr *MockSecretReaderMockRecorder) CreateEmptyDBBytes(masterPassword any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateEmptyDBBytes", reflect.TypeOf((*MockSecretReader)(nil).CreateEmptyDBBytes), masterPassword)
+}
+
 // DeleteSecretEntry mocks base method.
 func (m *MockSecretReader) DeleteSecretEntry(secretEntry secretsdb.SecretEntry) bool {
 	m.ctrl.T.Helper()
@@ -131,6 +146,20 @@ func (m *MockSecretReader) ReadEntriesFromContentGroupedByPath() error {
 func (mr *MockSecretReaderMockRecorder) ReadEntriesFromContentGroupedByPath() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadEntriesFromContentGroupedByPath", reflect.TypeOf((*MockSecretReader)(nil).ReadEntriesFromContentGroupedByPath))
+}
+
+// Save mocks base method.
+func (m *MockSecretReader) Save() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Save")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Save indicates an expected call of Save.
+func (mr *MockSecretReaderMockRecorder) Save() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Save", reflect.TypeOf((*MockSecretReader)(nil).Save))
 }
 
 // WriteDBBytes mocks base method.

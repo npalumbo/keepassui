@@ -15,12 +15,27 @@ import (
 type DBFileEntry struct {
 	Container      *fyne.Container
 	FindFileButton *widget.Button
-	FileOpenDialog *dialog.FileDialog
 }
 
 func CreateDBFileEntry(masterPasswordDialog *MasterPasswordDialog, parent fyne.Window) DBFileEntry {
-	var byteContent []byte
+	return CreateDBFileEntryWithLocation(masterPasswordDialog, parent, nil)
+}
 
+func CreateDBFileEntryWithLocation(masterPasswordDialog *MasterPasswordDialog, parent fyne.Window, location fyne.ListableURI) DBFileEntry {
+
+	findFileButton := widget.NewButtonWithIcon("Load Keepass file", theme.SearchIcon(), func() {
+		fileOpen := createFileOpenDialog(masterPasswordDialog, parent, location)
+		fileOpen.Show()
+	})
+
+	return DBFileEntry{
+		Container:      container.NewStack(findFileButton),
+		FindFileButton: findFileButton,
+	}
+}
+
+func createFileOpenDialog(masterPasswordDialog *MasterPasswordDialog, parent fyne.Window, location fyne.ListableURI) *dialog.FileDialog {
+	var byteContent []byte
 	fileOpen := dialog.NewFileOpen(func(dir fyne.URIReadCloser, err error) {
 		if err == nil && dir != nil {
 
@@ -36,13 +51,6 @@ func CreateDBFileEntry(masterPasswordDialog *MasterPasswordDialog, parent fyne.W
 		}
 	}, parent)
 	fileOpen.SetFilter(storage.NewExtensionFileFilter([]string{".kdbx"}))
-	findFileButton := widget.NewButtonWithIcon("Load Keepass file", theme.SearchIcon(), func() {
-		fileOpen.Show()
-	})
-
-	return DBFileEntry{
-		Container:      container.NewStack(findFileButton),
-		FindFileButton: findFileButton,
-		FileOpenDialog: fileOpen,
-	}
+	fileOpen.SetLocation(location)
+	return fileOpen
 }

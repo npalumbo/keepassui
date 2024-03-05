@@ -3,6 +3,9 @@ package secretsreader
 import (
 	"keepassui/internal/secretsdb"
 	"slices"
+	"strings"
+
+	"fyne.io/fyne/v2/storage"
 )
 
 //go:generate mockgen -destination=../mocks/secretsreader/mock_secretsreader.go -source=./secretsreader.go
@@ -29,9 +32,11 @@ type SecretReader interface {
 	GetFirstPath() string
 	GetEntriesForPath(path string) []secretsdb.SecretEntry
 	WriteDBBytes() ([]byte, error)
+	Save() error
 	AddSecretEntry(secretEntry secretsdb.SecretEntry)
 	ModifySecretEntry(originalTitle, originalGroup string, originalIsGroup bool, secretEntry secretsdb.SecretEntry)
 	DeleteSecretEntry(secretEntry secretsdb.SecretEntry) bool
+	CreateEmptyDBBytes(masterPassword string) ([]byte, error)
 }
 
 func (dsr DefaultSecretsReader) ReadEntriesFromContentGroupedByPath() error {
@@ -62,10 +67,41 @@ func (dsr DefaultSecretsReader) AddSecretEntry(secretEntry secretsdb.SecretEntry
 	loadedDB.AddSecretEntry(secretEntry)
 }
 
+func (dsr DefaultSecretsReader) Save() error {
+	bytes, err := dsr.WriteDBBytes()
+
+	if err != nil {
+		return err
+	}
+
+	fURI, err := storage.ParseURI(dsr.GetUriID())
+
+	if err != nil {
+		return err
+	}
+	fileWC, err := storage.Writer(fURI)
+
+	if err != nil {
+		return err
+	}
+	_, err = fileWC.Write(bytes)
+
+	if err != nil {
+		return err
+	}
+
+	err = fileWC.Close()
+
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (dsr DefaultSecretsReader) ModifySecretEntry(originalTitle, originalGroup string, originalIsGroup bool, secretEntry secretsdb.SecretEntry) {
 	entries := loadedDB.EntriesByPath[originalGroup]
 	i := slices.IndexFunc(entries, func(se secretsdb.SecretEntry) bool {
-		return se.Title == originalTitle && se.IsGroup == originalIsGroup
+		return se.Title == originalTitle && se.IsGroup == originalIsGroup && se.Group == originalGroup
 	})
 	if i != -1 {
 		entries[i].Group = secretEntry.Group
@@ -73,9 +109,35 @@ func (dsr DefaultSecretsReader) ModifySecretEntry(originalTitle, originalGroup s
 		entries[i].Username = secretEntry.Username
 		entries[i].Password = secretEntry.Password
 		entries[i].Notes = secretEntry.Notes
+		if originalIsGroup && originalTitle != secretEntry.Title {
+			for i, path := range loadedDB.PathsInOrder {
+				if strings.Contains(path, originalTitle) {
+					loadedDB.PathsInOrder[i] = strings.Replace(path, originalTitle, secretEntry.Title, 1)
+				}
+			}
+
+			for keypath, secrets := range loadedDB.EntriesByPath {
+				for i, entry := range secrets {
+					entry.Group = strings.Replace(entry.Group, originalTitle, secretEntry.Title, 1)
+					secrets[i] = entry
+				}
+				replacedPath := strings.Replace(keypath, originalTitle, secretEntry.Title, 1)
+				if replacedPath != keypath {
+					loadedDB.EntriesByPath[replacedPath] = loadedDB.EntriesByPath[keypath]
+					delete(loadedDB.EntriesByPath, keypath)
+				}
+			}
+		}
 	}
 }
 
 func (dsr DefaultSecretsReader) DeleteSecretEntry(secretEntry secretsdb.SecretEntry) bool {
 	return loadedDB.DeleteSecretEntry(secretEntry)
+}
+
+func (dsr DefaultSecretsReader) CreateEmptyDBBytes(masterPassword string) ([]byte, error) {
+	entriesByPath := make(map[string][]secretsdb.SecretEntry)
+	entriesByPath["Root"] = []secretsdb.SecretEntry{}
+	secretsDB := secretsdb.SecretsDB{EntriesByPath: entriesByPath, PathsInOrder: []string{"Root"}}
+	return secretsDB.WriteDBBytes(masterPassword)
 }

@@ -11,16 +11,15 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/dialog"
-	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
 type NavView struct {
-	stagerController        StagerController
-	navAndListContainer     *fyne.Container
-	navTop                  *fyne.Container
-	SaveButton              *widget.Button
+	stagerController    StagerController
+	navAndListContainer *fyne.Container
+	navTop              *fyne.Container
+	// SaveButton              *widget.Button
 	GroupCreateButton       *widget.Button
 	SecretEntryCreateButton *widget.Button
 	GoBackButton            *widget.Button
@@ -48,19 +47,14 @@ func (n *NavView) DataChanged() {
 
 	n.UpdateNavView(n.secretsReader.GetFirstPath())
 
-	n.SaveButton.OnTapped = func() {
-		bytes, err := n.secretsReader.WriteDBBytes()
+	// n.SaveButton.OnTapped = func() {
+	// 	err := n.secretsReader.Save()
 
-		if err != nil {
-			dialog.ShowError(err, n.parent)
-			return
-		}
-		fileSaveDialog := createFileSaveDialog(bytes, n.secretsReader.GetUriID(), n.parent)
-
-		if fileSaveDialog != nil {
-			fileSaveDialog.Show()
-		}
-	}
+	// 	if err != nil {
+	// 		dialog.ShowError(err, n.parent)
+	// 		return
+	// 	}
+	// }
 
 	if n.stagerController != nil {
 		err := n.stagerController.TakeOver(n.GetStageName())
@@ -71,72 +65,31 @@ func (n *NavView) DataChanged() {
 
 }
 
-func createFileSaveDialog(bytes []byte, originalURI string, parent fyne.Window) *dialog.FileDialog {
-	fileSaveDialog := dialog.NewFileSave(func(uc fyne.URIWriteCloser, err error) {
+// func getLocationURI(fURI fyne.URI) (fyne.ListableURI, error) {
+// 	if !fyne.CurrentDevice().IsMobile() {
+// 		listable, err := storage.CanList(fURI)
 
-		if err != nil {
-			dialog.ShowError(err, parent)
-			return
-		}
-
-		if uc == nil {
-			return
-		}
-		defer uc.Close()
-		_, writeerr := uc.Write(bytes)
-
-		if writeerr != nil {
-			dialog.ShowError(writeerr, parent)
-			return
-		}
-
-	}, parent)
-
-	fURI, uriErr := storage.ParseURI(originalURI)
-	if uriErr != nil {
-		dialog.ShowError(uriErr, parent)
-		return nil
-	}
-
-	locationURI, err := getLocationURI(fURI)
-	if err != nil {
-		dialog.ShowError(err, parent)
-		return nil
-	}
-	if locationURI != nil {
-		fileSaveDialog.SetLocation(locationURI)
-		fileSaveDialog.SetFileName(fURI.Name())
-	}
-
-	fileSaveDialog.SetFilter(storage.NewExtensionFileFilter([]string{".kdbx"}))
-	return fileSaveDialog
-}
-
-func getLocationURI(fURI fyne.URI) (fyne.ListableURI, error) {
-	if !fyne.CurrentDevice().IsMobile() {
-		listable, err := storage.CanList(fURI)
-
-		if err != nil {
-			slog.Error(err.Error())
-		}
-		// if full URI is not listable, attempt with parent
-		if !listable {
-			locationURI, err := storage.Parent(fURI)
-			if err == nil {
-				listable, err = storage.CanList(locationURI)
-			}
-			if err == nil && listable {
-				listableURI, err := storage.ListerForURI(locationURI)
-				if err != nil {
-					return nil, err
-				} else {
-					return listableURI, nil
-				}
-			}
-		}
-	}
-	return nil, nil
-}
+// 		if err != nil {
+// 			slog.Error(err.Error())
+// 		}
+// 		// if full URI is not listable, attempt with parent
+// 		if !listable {
+// 			locationURI, err := storage.Parent(fURI)
+// 			if err == nil {
+// 				listable, err = storage.CanList(locationURI)
+// 			}
+// 			if err == nil && listable {
+// 				listableURI, err := storage.ListerForURI(locationURI)
+// 				if err != nil {
+// 					return nil, err
+// 				} else {
+// 					return listableURI, nil
+// 				}
+// 			}
+// 		}
+// 	}
+// 	return nil, nil
+// }
 
 func (n *NavView) UpdateNavView(path string) {
 
@@ -188,6 +141,10 @@ func (n *NavView) UpdateNavView(path string) {
 				newGroup := secretsdb.SecretEntry{Path: pathComponents, Group: path, Title: groupNameEntry.Text, IsGroup: true}
 				n.secretsReader.AddSecretEntry(newGroup)
 				n.UpdateNavView(path)
+				err := n.secretsReader.Save()
+				if err != nil {
+					dialog.ShowError(err, n.parent)
+				}
 			}
 		}, n.parent)
 		form.Show()
@@ -248,6 +205,10 @@ func createListNav(path string, parent fyne.Window, navView *NavView) (*widget.L
 				deleted := navView.secretsReader.DeleteSecretEntry(secret)
 				if deleted {
 					navView.UpdateNavView(secret.Group)
+					err := navView.secretsReader.Save()
+					if err != nil {
+						dialog.ShowError(err, navView.parent)
+					}
 				}
 			}
 
@@ -265,6 +226,10 @@ func createListNav(path string, parent fyne.Window, navView *NavView) (*widget.L
 							originalTitle := secret.Title
 							secret.Title = groupNameEntry.Text
 							navView.secretsReader.ModifySecretEntry(originalTitle, secret.Group, secret.IsGroup, secret)
+							err := navView.secretsReader.Save()
+							if err != nil {
+								dialog.ShowError(err, navView.parent)
+							}
 							navView.UpdateNavView(path)
 						}
 					}, navView.parent)
@@ -313,9 +278,9 @@ func CreateNavView(secretsReader secretsreader.SecretReader, addEntryView EntryU
 		generalButtons,
 	), container.NewPadded(breadcrumbsWithBackButton), nil, nil, nil)
 
-	saveButton := widget.NewButtonWithIcon("save", theme.DocumentSaveIcon(), func() {
+	// saveButton := widget.NewButtonWithIcon("save", theme.DocumentSaveIcon(), func() {
 
-	})
+	// })
 	groupCreateButton := widget.NewButtonWithIcon("new group", theme.FolderNewIcon(), func() {
 
 	})
@@ -330,27 +295,26 @@ func CreateNavView(secretsReader secretsreader.SecretReader, addEntryView EntryU
 		}
 	})
 
-	generalButtons.Add(container.NewPadded(saveButton))
-	generalButtons.Add(container.NewPadded(secretEntryCreateButton))
 	generalButtons.Add(container.NewPadded(groupCreateButton))
+	generalButtons.Add(container.NewPadded(secretEntryCreateButton))
 
 	listPanel := container.NewPadded()
 	navAndListContainer := container.NewBorder(container.NewVBox(navTop, widget.NewSeparator()), container.NewPadded(lockDBButton), nil, nil, listPanel)
 
 	return NavView{
-		stagerController:        stagerController,
-		navAndListContainer:     navAndListContainer,
-		breadCrumbs:             breadCrumbs,
-		listPanel:               listPanel,
-		addEntryView:            addEntryView,
-		parent:                  parent,
-		secretsReader:           secretsReader,
-		currentPath:             "",
-		GoBackButton:            goBackButton,
-		LockDBButton:            lockDBButton,
-		generalButtons:          generalButtons,
-		navTop:                  navTop,
-		SaveButton:              saveButton,
+		stagerController:    stagerController,
+		navAndListContainer: navAndListContainer,
+		breadCrumbs:         breadCrumbs,
+		listPanel:           listPanel,
+		addEntryView:        addEntryView,
+		parent:              parent,
+		secretsReader:       secretsReader,
+		currentPath:         "",
+		GoBackButton:        goBackButton,
+		LockDBButton:        lockDBButton,
+		generalButtons:      generalButtons,
+		navTop:              navTop,
+		// SaveButton:              saveButton,
 		GroupCreateButton:       groupCreateButton,
 		SecretEntryCreateButton: secretEntryCreateButton,
 	}
