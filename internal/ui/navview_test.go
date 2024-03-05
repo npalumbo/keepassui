@@ -9,6 +9,7 @@ import (
 	"keepassui/internal/ui"
 	"slices"
 	"testing"
+	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -119,10 +120,47 @@ func TestNavView_NavigateToNestedFolder(t *testing.T) {
 
 	test.AssertImageMatches(t, "navView_two_groups.png", w.Canvas().Capture())
 
-	secretReader.EXPECT().GetEntriesForPath("path 2").Times(1).Return(secretsDBWithTwoGroups().EntriesByPath["path 2"])
+	secretReader.EXPECT().GetEntriesForPath("path 1|path 2").Times(1).Return(secretsDBWithTwoGroups().EntriesByPath["path 1|path 2"])
 
 	// Ideally we would simulate a click from the UI but I struggle to find the right open button from the list
-	navView.UpdateNavView("path 2")
+	navView.UpdateNavView("path 1|path 2")
+
+	test.AssertImageMatches(t, "navView_two_groups_nested_group.png", w.Canvas().Capture())
+}
+
+func TestNavView_NavigateToNestedFolderByTappingOnListItem(t *testing.T) {
+	w := test.NewWindow(container.NewWithoutLayout())
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	secretReader := mock_secretsreader.NewMockSecretReader(mockCtrl)
+
+	secretReader.EXPECT().ReadEntriesFromContentGroupedByPath().Times(1).Return(nil)
+	secretReader.EXPECT().GetUriID().Times(1).Return("path")
+	secretReader.EXPECT().GetFirstPath().Times(1).Return("path 1")
+	secretReader.EXPECT().GetEntriesForPath("path 1").Times(1).Return(secretsDBWithTwoGroups().EntriesByPath["path 1"])
+
+	navView := ui.CreateNavView(secretReader, nil, w, nil)
+
+	navView.DataChanged()
+	w.SetContent(navView.GetPaintedContainer())
+	w.Resize(fyne.NewSize(600, 600))
+
+	test.AssertImageMatches(t, "navView_two_groups.png", w.Canvas().Capture())
+
+	secretReader.EXPECT().GetEntriesForPath("path 1|path 2").Times(1).Return(secretsDBWithTwoGroups().EntriesByPath["path 1|path 2"])
+
+	objects := test.LaidOutObjects(navView.ListPanel.Objects[0])
+
+	// Since widget.listItem is unexported we can't use it as filter in the objects array.
+	tappable, ok := objects[40].(fyne.Tappable)
+	if ok {
+		test.Tap(tappable)
+	} else {
+		t.FailNow()
+	}
+
+	time.Sleep(10 * time.Millisecond)
 
 	test.AssertImageMatches(t, "navView_two_groups_nested_group.png", w.Canvas().Capture())
 }
@@ -150,45 +188,15 @@ func TestNavView_DeleteFirstEntry(t *testing.T) {
 
 	// Ideally we would simulate a click from the UI but I struggle to find the right open button from the list
 	secretsDBWithTwoGroups.DeleteSecretEntry(secretsdb.SecretEntry{
-		Title: "title 2", Group: "path 2", Username: "username 2",
+		Title: "title 2", Group: "path 1|path 2", Username: "username 2",
 		Password: "password 2", Url: "url 2", Notes: "notes 2"})
 
-	secretReader.EXPECT().GetEntriesForPath("path 2").Times(1).Return(secretsDBWithTwoGroups.EntriesByPath["path 2"])
+	secretReader.EXPECT().GetEntriesForPath("path 1|path 2").Times(1).Return(secretsDBWithTwoGroups.EntriesByPath["path 1|path 2"])
 
-	navView.UpdateNavView("path 2")
+	navView.UpdateNavView("path 1|path 2")
 
 	test.AssertImageMatches(t, "navView_two_groups_nested_group_with_one_entry_deleted.png", w.Canvas().Capture())
 }
-
-// func TestNavView_TapSaveButtonOpensSaveDialog(t *testing.T) {
-// 	w := test.NewWindow(container.NewWithoutLayout())
-// 	mockCtrl := gomock.NewController(t)
-// 	defer mockCtrl.Finish()
-
-// 	secretReader := mock_secretsreader.NewMockSecretReader(mockCtrl)
-
-// 	secretsDBWithTwoGroups := secretsDBWithTwoGroups()
-// 	secretReader.EXPECT().ReadEntriesFromContentGroupedByPath().Times(1).Return(nil)
-// 	secretReader.EXPECT().GetUriID().Times(1).Return("file://path")
-// 	secretReader.EXPECT().GetFirstPath().Times(1).Return("path 1")
-// 	secretReader.EXPECT().GetEntriesForPath("path 1").Times(1).Return(secretsDBWithTwoGroups.EntriesByPath["path 1"])
-
-// 	navView := ui.CreateNavView(secretReader, nil, w, nil)
-
-// 	navView.DataChanged()
-
-// 	w.SetContent(navView.GetPaintedContainer())
-// 	w.Resize(fyne.NewSize(600, 600))
-
-// 	test.AssertImageMatches(t, "navView_two_groups.png", w.Canvas().Capture())
-
-// 	secretReader.EXPECT().GetUriID().Times(1).Return("file://path")
-// 	secretReader.EXPECT().WriteDBBytes().Times(1)
-
-// 	test.Tap(navView.SaveButton)
-
-// 	test.AssertImageMatches(t, "navView_two_groups_tap_save_button.png", w.Canvas().Capture())
-// }
 
 func TestNavView_TapOnNewGroupOpensNewGroupDialog(t *testing.T) {
 	w := test.NewWindow(container.NewWithoutLayout())
