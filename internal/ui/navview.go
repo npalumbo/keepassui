@@ -234,6 +234,8 @@ func createListNav(path string, parent fyne.Window, navView *NavView) (*widget.L
 			if ok {
 				if secret.IsGroup {
 					navView.UpdateNavView(strings.Join([]string{secret.Group, secret.Title}, "|"))
+				} else {
+					navView.addEntryView.ModifyEntry(&secret)
 				}
 			}
 		}

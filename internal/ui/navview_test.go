@@ -165,6 +165,46 @@ func TestNavView_NavigateToNestedFolderByTappingOnListItem(t *testing.T) {
 	test.AssertImageMatches(t, "navView_two_groups_nested_group.png", w.Canvas().Capture())
 }
 
+func TestNavView_CallsModifyEntryByTappingOnListItem(t *testing.T) {
+	w := test.NewWindow(container.NewWithoutLayout())
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	secretReader := mock_secretsreader.NewMockSecretReader(mockCtrl)
+
+	secretReader.EXPECT().ReadEntriesFromContentGroupedByPath().Times(1).Return(nil)
+	secretReader.EXPECT().GetUriID().Times(1).Return("path")
+	secretReader.EXPECT().GetFirstPath().Times(1).Return("path 1")
+	secrets := secretsDBWithTwoGroups()
+	entriesForPath1 := secrets.EntriesByPath["path 1"]
+	secretReader.EXPECT().GetEntriesForPath("path 1").Times(1).Return(entriesForPath1)
+
+	stagerController := mocks_ui.NewMockStagerController(mockCtrl)
+	stagerController.EXPECT().TakeOver("NavView").Times(1)
+
+	entryUpdater := mocks_ui.NewMockEntryUpdater(mockCtrl)
+
+	entryUpdater.EXPECT().ModifyEntry(&entriesForPath1[0]).Times(1)
+
+	navView := ui.CreateNavView(secretReader, entryUpdater, w, stagerController)
+
+	navView.DataChanged()
+	w.SetContent(navView.GetPaintedContainer())
+	w.Resize(fyne.NewSize(600, 600))
+
+	test.AssertImageMatches(t, "navView_two_groups.png", w.Canvas().Capture())
+
+	objects := test.LaidOutObjects(navView.ListPanel.Objects[0])
+
+	// Since widget.listItem is unexported we can't use it as filter in the objects array.
+	tappable, ok := objects[3].(fyne.Tappable)
+	if ok {
+		test.Tap(tappable)
+	} else {
+		t.FailNow()
+	}
+}
+
 func TestNavView_DeleteFirstEntry(t *testing.T) {
 	w := test.NewWindow(container.NewWithoutLayout())
 	mockCtrl := gomock.NewController(t)
