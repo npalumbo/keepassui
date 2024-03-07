@@ -18,14 +18,13 @@ func TestAddEntryShowsDisabledConfirmButtonWhenNotFullyPopulated(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	stagerController := mocks_ui.NewMockStagerController(mockCtrl)
-	addEntryView := ui.CreateAddEntryView(nil, "prevousScreen", stagerController)
+	w := test.NewWindow(container.NewWithoutLayout())
+	addEntryView := ui.CreateAddEntryView(nil, "prevousScreen", stagerController, w)
 
 	templateSecret := secretsdb.SecretEntry{Path: []string{"path 1"}, Group: "path 1", IsGroup: false}
 	stagerController.EXPECT().TakeOver("AddEntry").Times(1).Return(nil)
 
 	addEntryView.AddEntry(&templateSecret)
-
-	w := test.NewWindow(container.NewWithoutLayout())
 
 	w.SetContent(addEntryView.GetPaintedContainer())
 	w.Resize(fyne.Size{Width: 600, Height: 600})
@@ -40,7 +39,8 @@ func TestAddEntryTapOnCancelTakesUsToThePreviousScreenWithoutChangingSecretsDB(t
 
 	stagerController := mocks_ui.NewMockStagerController(mockCtrl)
 	mockSecretsReader := mock_secretsreader.NewMockSecretReader(mockCtrl)
-	addEntryView := ui.CreateAddEntryView(mockSecretsReader, "previousScreen", stagerController)
+	w := test.NewWindow(container.NewWithoutLayout())
+	addEntryView := ui.CreateAddEntryView(mockSecretsReader, "previousScreen", stagerController, w)
 
 	templateSecret := secretsdb.SecretEntry{Path: []string{"path 1"}, Group: "path 1", IsGroup: false}
 	stagerController.EXPECT().TakeOver("AddEntry").Times(1).Return(nil)
@@ -59,7 +59,8 @@ func TestAddEntryShowsEnabledConfirmButtonWhenFullyPopulated(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	stagerController := mocks_ui.NewMockStagerController(mockCtrl)
-	addEntryView := ui.CreateAddEntryView(nil, "prevousScreen", stagerController)
+	w := test.NewWindow(container.NewWithoutLayout())
+	addEntryView := ui.CreateAddEntryView(nil, "prevousScreen", stagerController, w)
 
 	templateSecret := secretsdb.SecretEntry{
 		Path: []string{"path 1"}, Group: "path 1", IsGroup: false,
@@ -71,8 +72,6 @@ func TestAddEntryShowsEnabledConfirmButtonWhenFullyPopulated(t *testing.T) {
 	addEntryView.SecretForm.TypeSecretEntryInForm(secretsdb.SecretEntry{
 		Title: "aTitle", Username: "aUsername", Password: "aPassword", Url: "aUrl", Notes: "someNotes"},
 	)
-
-	w := test.NewWindow(container.NewWithoutLayout())
 
 	w.SetContent(addEntryView.GetPaintedContainer())
 	w.Resize(fyne.Size{Width: 600, Height: 600})
@@ -87,7 +86,8 @@ func TestAddEntryTapOnSubmitTakesUsToThePreviousScreenAndAddsEntryToSecretsDB(t 
 
 	stagerController := mocks_ui.NewMockStagerController(mockCtrl)
 	mockSecretsReader := mock_secretsreader.NewMockSecretReader(mockCtrl)
-	addEntryView := ui.CreateAddEntryView(mockSecretsReader, "previousScreen", stagerController)
+	w := test.NewWindow(container.NewWithoutLayout())
+	addEntryView := ui.CreateAddEntryView(mockSecretsReader, "previousScreen", stagerController, w)
 
 	templateSecret := secretsdb.SecretEntry{
 		Path: []string{"path 1"}, Group: "path 1", IsGroup: false,
@@ -117,7 +117,8 @@ func TestModifyEntryTapOnSubmitTakesUsToThePreviousScreenAndModifiesEntryToSecre
 
 	stagerController := mocks_ui.NewMockStagerController(mockCtrl)
 	mockSecretsReader := mock_secretsreader.NewMockSecretReader(mockCtrl)
-	modifyEntryView := ui.CreateAddEntryView(mockSecretsReader, "previousScreen", stagerController)
+	w := test.NewWindow(container.NewWithoutLayout())
+	modifyEntryView := ui.CreateAddEntryView(mockSecretsReader, "previousScreen", stagerController, w)
 
 	templateSecret := secretsdb.SecretEntry{
 		Path: []string{"path 1"}, Group: "path 1", IsGroup: false,

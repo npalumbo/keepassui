@@ -6,6 +6,7 @@ import (
 	"log/slog"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/driver/mobile"
 )
 
 //go:generate mockgen -destination=../mocks/ui/mock_addentryview.go -source=./addentryview.go
@@ -20,6 +21,7 @@ type AddEntryView struct {
 	SecretForm        *SecretForm
 	stageManager      StagerController
 	previousStageName string
+	parent            fyne.Window
 }
 
 func (a *AddEntryView) GetPaintedContainer() *fyne.Container {
@@ -76,12 +78,24 @@ func (a *AddEntryView) ModifyEntry(templateEntry *secretsdb.SecretEntry) {
 	addOrModify(a, templateEntry, true)
 }
 
-func CreateAddEntryView(secretsreader secretsreader.SecretReader, previousStageName string, stageManager StagerController) AddEntryView {
+func CreateAddEntryView(secretsreader secretsreader.SecretReader, previousStageName string, stageManager StagerController, parent fyne.Window) AddEntryView {
 
 	return AddEntryView{
 		secretsReader:     secretsreader,
 		SecretForm:        nil,
 		stageManager:      stageManager,
 		previousStageName: previousStageName,
+		parent:            parent,
 	}
+}
+
+func (a *AddEntryView) ExecuteOnTakeOver() {
+	a.parent.Canvas().SetOnTypedKey(func(ev *fyne.KeyEvent) {
+		if ev.Name == mobile.KeyBack {
+			err := a.stageManager.TakeOver(a.previousStageName)
+			if err != nil {
+				slog.Error(err.Error())
+			}
+		}
+	})
 }

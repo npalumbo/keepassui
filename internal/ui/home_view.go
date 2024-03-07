@@ -4,6 +4,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/driver/mobile"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
@@ -13,6 +14,7 @@ type HomeView struct {
 	dbFileEntry      *DBFileEntry
 	stagerController StagerController
 	homeContainer    *fyne.Container
+	parent           fyne.Window
 }
 
 func CreateHomeView(dbFileEntry *DBFileEntry, stagerController StagerController, parent fyne.Window) HomeView {
@@ -31,6 +33,7 @@ func CreateHomeView(dbFileEntry *DBFileEntry, stagerController StagerController,
 		dbFileEntry:      dbFileEntry,
 		stagerController: stagerController,
 		homeContainer:    homeContainer,
+		parent:           parent,
 	}
 }
 
@@ -40,4 +43,17 @@ func (h *HomeView) GetPaintedContainer() *fyne.Container {
 
 func (h *HomeView) GetStageName() string {
 	return "Home"
+}
+
+func (h *HomeView) ExecuteOnTakeOver() {
+
+	driver := fyne.CurrentApp().Driver()
+	mobileDriver, ok := driver.(mobile.Driver)
+	if ok {
+		h.parent.Canvas().SetOnTypedKey(func(ev *fyne.KeyEvent) {
+			if ev.Name == mobile.KeyBack {
+				mobileDriver.GoBack()
+			}
+		})
+	}
 }
