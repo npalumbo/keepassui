@@ -6,6 +6,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/driver/mobile"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -64,4 +65,10 @@ func (p *PasswordConfirmView) GetStageName() string {
 
 func (p *PasswordConfirmView) ExecuteOnTakeOver() {
 	p.container = createContainer(p.fileSaver, p.stagerController, p.parent)
+	p.parent.Canvas().SetOnTypedKey(func(ev *fyne.KeyEvent) {
+		if ev.Name == mobile.KeyBack {
+			goToHomeView(p.stagerController, p.parent)
+		}
+	})
+
 }

@@ -11,6 +11,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/driver/mobile"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
@@ -111,6 +112,10 @@ func (n *NavView) UpdateNavView(path string) {
 				}
 			}
 		}, n.parent)
+		form.SetOnClosed(func() {
+			n.ExecuteOnTakeOver()
+		})
+		n.disableBackButton()
 		form.Show()
 	}
 
@@ -197,6 +202,10 @@ func createListNav(path string, parent fyne.Window, navView *NavView) (*widget.L
 							navView.UpdateNavView(path)
 						}
 					}, navView.parent)
+					form.SetOnClosed(func() {
+						navView.ExecuteOnTakeOver()
+					})
+					navView.disableBackButton()
 					form.Show()
 				}
 
@@ -263,10 +272,7 @@ func CreateNavView(secretsReader secretsreader.SecretReader, addEntryView EntryU
 	})
 
 	lockDBButton := widget.NewButtonWithIcon("lock db", theme.LogoutIcon(), func() {
-		err := stagerController.TakeOver("Home")
-		if err != nil {
-			dialog.ShowError(err, parent)
-		}
+		goToHomeView(stagerController, parent)
 	})
 
 	generalButtons.Add(container.NewPadded(groupCreateButton))
@@ -303,5 +309,19 @@ func (n *NavView) GetStageName() string {
 }
 
 func (n *NavView) ExecuteOnTakeOver() {
+	n.parent.Canvas().SetOnTypedKey(func(ev *fyne.KeyEvent) {
+		if ev.Name == mobile.KeyBack {
+			if n.GoBackButton.Disabled() {
+				goToHomeView(n.stagerController, n.parent)
+			} else {
+				n.GoBackButton.OnTapped()
+			}
+		}
+	})
 	n.UpdateNavView(n.currentPath)
+}
+
+func (n *NavView) disableBackButton() {
+	n.parent.Canvas().SetOnTypedKey(func(ev *fyne.KeyEvent) {
+	})
 }

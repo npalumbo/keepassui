@@ -22,7 +22,7 @@ func CreateMainContent(parent fyne.Window, stor fyne.Storage) MainContent {
 	dbFileEntry := CreateDBFileEntry(&masterPasswordDialog, parent)
 	currentContainer := container.NewStack()
 	stageManager := CreateStageManager(currentContainer)
-	addEntryView := CreateAddEntryView(secretsReader, "NavView", stageManager)
+	addEntryView := CreateAddEntryView(secretsReader, "NavView", stageManager, parent)
 	navView := CreateNavView(secretsReader, &addEntryView, parent, &stageManager)
 	fileSaver := CreateFileSaver(secretsReader, stageManager, parent)
 	passwordConfirmView := CreatePasswordConfirmView(fileSaver, stageManager, parent)
