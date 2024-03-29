@@ -13,5 +13,8 @@ The desired state is for this to evolve into a desktop and mobile app using the 
 ## Contributing
 This is in early stages. All help is welcome. If you want to report a bug or request a feature please raise an issue. To contribute code, please fork the repository and create a full request.
 
+## Android app
+You can get the [Android app](https://play.google.com/store/apps/details?id=com.keepassui) from the Google Play Store.
 
-<img width="605" alt="Screenshot 2023-09-24 at 12 40 19" src="https://github.com/npalumbo/keepassui/assets/1648970/2e92e7b7-573f-4797-a621-7192496e07b5">
+
+![keepassui_feature_image](https://github.com/npalumbo/keepassui/assets/1648970/0eb663cc-6fb3-44f3-86b1-a4b6daca4162)
