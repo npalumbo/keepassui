@@ -1,7 +1,6 @@
 package ui_test
 
 import (
-	"errors"
 	mock_secretsreader "keepassui/internal/mocks/secretsreader"
 	mocks_ui "keepassui/internal/mocks/ui"
 	"keepassui/internal/secretsdb"
@@ -19,14 +18,6 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-type MockedSecretReaderFactory struct {
-	mockedSecretReader secretsreader.SecretReader
-}
-
-func (m MockedSecretReaderFactory) GetSecretReader(d secretsreader.DefaultSecretsReader) secretsreader.SecretReader {
-	return m.mockedSecretReader
-}
-
 func TestNavView_DataChanged_Does_Nothing_When_SecretsReader_is_EmptyObject(t *testing.T) {
 	secretsReader := &secretsreader.DefaultSecretsReader{}
 	w := test.NewWindow(container.NewWithoutLayout())
@@ -41,25 +32,6 @@ func TestNavView_DataChanged_Does_Nothing_When_SecretsReader_is_EmptyObject(t *t
 	test.AssertImageMatches(t, "navView_Err_Does_Nothing_When_SecretsReader_is_EmptyObject.png", w.Canvas().Capture())
 }
 
-func TestNavView_DataChanged_Shows_Error_Error_Reading_secrets(t *testing.T) {
-	w := test.NewWindow(container.NewWithoutLayout())
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	secretReader := mock_secretsreader.NewMockSecretReader(mockCtrl)
-	secretReader.EXPECT().ReadEntriesFromContentGroupedByPath().Times(1).Return(errors.New("Fake Error"))
-	secretReader.EXPECT().GetUriID().Times(1).Return("path")
-
-	navView := ui.CreateNavView(secretReader, nil, w, nil)
-
-	navView.DataChanged()
-
-	w.SetContent(navView.GetPaintedContainer())
-	w.Resize(fyne.NewSize(600, 600))
-
-	test.AssertImageMatches(t, "navView_Err_Reading_Secrets.png", w.Canvas().Capture())
-}
-
 func TestNavView_DataChanged(t *testing.T) {
 	w := test.NewWindow(container.NewWithoutLayout())
 	mockCtrl := gomock.NewController(t)
@@ -67,7 +39,6 @@ func TestNavView_DataChanged(t *testing.T) {
 
 	secretReader := mock_secretsreader.NewMockSecretReader(mockCtrl)
 
-	secretReader.EXPECT().ReadEntriesFromContentGroupedByPath().Times(1).Return(nil)
 	secretReader.EXPECT().GetUriID().Times(1).Return("path")
 	secretReader.EXPECT().GetFirstPath().Times(1).Return("path 1")
 	secretReader.EXPECT().GetEntriesForPath("path 1").Times(1).Return(secretsDBForTesting().EntriesByPath["path 1"])
@@ -87,7 +58,6 @@ func TestNavView_DataChanged_two_groups(t *testing.T) {
 
 	secretReader := mock_secretsreader.NewMockSecretReader(mockCtrl)
 
-	secretReader.EXPECT().ReadEntriesFromContentGroupedByPath().Times(1).Return(nil)
 	secretReader.EXPECT().GetUriID().Times(1).Return("path")
 	secretReader.EXPECT().GetFirstPath().Times(1).Return("path 1")
 	secretReader.EXPECT().GetEntriesForPath("path 1").Times(1).Return(secretsDBWithTwoGroups().EntriesByPath["path 1"])
@@ -107,7 +77,6 @@ func TestNavView_NavigateToNestedFolder(t *testing.T) {
 
 	secretReader := mock_secretsreader.NewMockSecretReader(mockCtrl)
 
-	secretReader.EXPECT().ReadEntriesFromContentGroupedByPath().Times(1).Return(nil)
 	secretReader.EXPECT().GetUriID().Times(1).Return("path")
 	secretReader.EXPECT().GetFirstPath().Times(1).Return("path 1")
 	secretReader.EXPECT().GetEntriesForPath("path 1").Times(1).Return(secretsDBWithTwoGroups().EntriesByPath["path 1"])
@@ -135,7 +104,6 @@ func TestNavView_NavigateToNestedFolderByTappingOnListItem(t *testing.T) {
 
 	secretReader := mock_secretsreader.NewMockSecretReader(mockCtrl)
 
-	secretReader.EXPECT().ReadEntriesFromContentGroupedByPath().Times(1).Return(nil)
 	secretReader.EXPECT().GetUriID().Times(1).Return("path")
 	secretReader.EXPECT().GetFirstPath().Times(1).Return("path 1")
 	secretReader.EXPECT().GetEntriesForPath("path 1").Times(1).Return(secretsDBWithTwoGroups().EntriesByPath["path 1"])
@@ -172,7 +140,6 @@ func TestNavView_CallsModifyEntryByTappingOnListItem(t *testing.T) {
 
 	secretReader := mock_secretsreader.NewMockSecretReader(mockCtrl)
 
-	secretReader.EXPECT().ReadEntriesFromContentGroupedByPath().Times(1).Return(nil)
 	secretReader.EXPECT().GetUriID().Times(1).Return("path")
 	secretReader.EXPECT().GetFirstPath().Times(1).Return("path 1")
 	secrets := secretsDBWithTwoGroups()
@@ -213,7 +180,6 @@ func TestNavView_DeleteFirstEntry(t *testing.T) {
 	secretReader := mock_secretsreader.NewMockSecretReader(mockCtrl)
 
 	secretsDBWithTwoGroups := secretsDBWithTwoGroups()
-	secretReader.EXPECT().ReadEntriesFromContentGroupedByPath().Times(1).Return(nil)
 	secretReader.EXPECT().GetUriID().Times(1).Return("path")
 	secretReader.EXPECT().GetFirstPath().Times(1).Return("path 1")
 	secretReader.EXPECT().GetEntriesForPath("path 1").Times(1).Return(secretsDBWithTwoGroups.EntriesByPath["path 1"])
@@ -246,7 +212,6 @@ func TestNavView_TapOnNewGroupOpensNewGroupDialog(t *testing.T) {
 	secretReader := mock_secretsreader.NewMockSecretReader(mockCtrl)
 
 	secretsDBWithTwoGroups := secretsDBWithTwoGroups()
-	secretReader.EXPECT().ReadEntriesFromContentGroupedByPath().Times(1).Return(nil)
 	secretReader.EXPECT().GetUriID().Times(1).Return("file://path")
 	secretReader.EXPECT().GetFirstPath().Times(1).Return("path 1")
 	secretReader.EXPECT().GetEntriesForPath("path 1").Times(1).Return(secretsDBWithTwoGroups.EntriesByPath["path 1"])
@@ -273,7 +238,6 @@ func TestNavView_TapOnNewSecretCallsAddEntry(t *testing.T) {
 	secretReader := mock_secretsreader.NewMockSecretReader(mockCtrl)
 
 	secretsDBWithTwoGroups := secretsDBWithTwoGroups()
-	secretReader.EXPECT().ReadEntriesFromContentGroupedByPath().Times(1).Return(nil)
 	secretReader.EXPECT().GetUriID().Times(1).Return("file://path")
 	secretReader.EXPECT().GetFirstPath().Times(1).Return("path 1")
 	secretReader.EXPECT().GetEntriesForPath("path 1").Times(1).Return(secretsDBWithTwoGroups.EntriesByPath["path 1"])
@@ -304,7 +268,6 @@ func TestNavView_TapOnEditSecretCallsModifyEntry(t *testing.T) {
 	secretReader := mock_secretsreader.NewMockSecretReader(mockCtrl)
 
 	secretsDBWithTwoGroups := secretsDBWithTwoGroups()
-	secretReader.EXPECT().ReadEntriesFromContentGroupedByPath().Times(1).Return(nil)
 	secretReader.EXPECT().GetUriID().Times(1).Return("file://path")
 	secretReader.EXPECT().GetFirstPath().Times(1).Return("path 1")
 	secretReader.EXPECT().GetEntriesForPath("path 1").Times(1).Return(secretsDBWithTwoGroups.EntriesByPath["path 1"])
@@ -347,7 +310,6 @@ func TestNavView_TapOnEditGroupOpensNewGroupDialog(t *testing.T) {
 	secretReader := mock_secretsreader.NewMockSecretReader(mockCtrl)
 
 	secretsDBWithTwoGroups := secretsDBWithTwoGroups()
-	secretReader.EXPECT().ReadEntriesFromContentGroupedByPath().Times(1).Return(nil)
 	secretReader.EXPECT().GetUriID().Times(1).Return("file://path")
 	secretReader.EXPECT().GetFirstPath().Times(1).Return("path 1")
 	secretReader.EXPECT().GetEntriesForPath("path 1").Times(1).Return(secretsDBWithTwoGroups.EntriesByPath["path 1"])
@@ -391,7 +353,6 @@ func TestNavView_TapLockDBButtonCallsHome(t *testing.T) {
 	secretReader := mock_secretsreader.NewMockSecretReader(mockCtrl)
 
 	secretsDBWithTwoGroups := secretsDBWithTwoGroups()
-	secretReader.EXPECT().ReadEntriesFromContentGroupedByPath().Times(1).Return(nil)
 	secretReader.EXPECT().GetUriID().Times(1).Return("file://path")
 	secretReader.EXPECT().GetFirstPath().Times(1).Return("path 1")
 	secretReader.EXPECT().GetEntriesForPath("path 1").Times(1).Return(secretsDBWithTwoGroups.EntriesByPath["path 1"])

@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"errors"
 	"keepassui/internal/secretsdb"
 	"keepassui/internal/secretsreader"
 	"log/slog"
@@ -35,13 +34,6 @@ type NavView struct {
 
 func (n *NavView) DataChanged() {
 	if n.secretsReader.GetUriID() == "" {
-		return
-	}
-
-	err := n.secretsReader.ReadEntriesFromContentGroupedByPath()
-
-	if err != nil {
-		dialog.ShowError(errors.New("Error reading secrets: "+err.Error()), n.parent)
 		return
 	}
 

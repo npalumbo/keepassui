@@ -26,7 +26,6 @@ func CreateDefaultSecretsReader(uriID string, contentInBytes []byte, password st
 }
 
 type SecretReader interface {
-	ReadEntriesFromContentGroupedByPath() error
 	GetUriID() string
 	GetFirstPath() string
 	GetEntriesForPath(path string) []secretsdb.SecretEntry
