@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"errors"
 	"keepassui/internal/secretsreader"
 	"log/slog"
 
@@ -50,9 +51,17 @@ func (m *MasterPasswordDialog) ShowDialog(uriID string, contentInBytes *[]byte) 
 			m.secretsReader.UriID = uriID
 			m.secretsReader.Password = m.PasswordEntry.Text
 			m.PasswordEntry.Text = ""
-			err := m.notify.Set(uniuri.New())
+
+			err := m.secretsReader.ReadEntriesFromContentGroupedByPath()
+
 			if err != nil {
-				slog.Error("Error notifying changes to listener", err)
+				dialog.ShowError(errors.New("Error reading secrets: "+err.Error()), m.parent)
+				return
+			}
+
+			err = m.notify.Set(uniuri.New())
+			if err != nil {
+				slog.Error("Error notifying changes to listener" + err.Error())
 			}
 		}
 	}, m.parent)

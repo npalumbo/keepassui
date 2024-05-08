@@ -14,9 +14,8 @@ type DefaultSecretsReader struct {
 	UriID          string
 	ContentInBytes []byte
 	Password       string
+	loadedDB       *secretsdb.SecretsDB
 }
-
-var loadedDB *secretsdb.SecretsDB
 
 func CreateDefaultSecretsReader(uriID string, contentInBytes []byte, password string) DefaultSecretsReader {
 	return DefaultSecretsReader{
@@ -27,7 +26,6 @@ func CreateDefaultSecretsReader(uriID string, contentInBytes []byte, password st
 }
 
 type SecretReader interface {
-	ReadEntriesFromContentGroupedByPath() error
 	GetUriID() string
 	GetFirstPath() string
 	GetEntriesForPath(path string) []secretsdb.SecretEntry
@@ -39,10 +37,10 @@ type SecretReader interface {
 	CreateEmptyDBBytes(masterPassword string) ([]byte, error)
 }
 
-func (dsr DefaultSecretsReader) ReadEntriesFromContentGroupedByPath() error {
+func (dsr *DefaultSecretsReader) ReadEntriesFromContentGroupedByPath() error {
 	secretsDB, err := secretsdb.ReadSecretsDBFromDBBytes(dsr.ContentInBytes, dsr.Password)
 	if err == nil {
-		loadedDB = &secretsDB
+		dsr.loadedDB = &secretsDB
 	}
 	return err
 }
@@ -52,19 +50,19 @@ func (dsr DefaultSecretsReader) GetUriID() string {
 }
 
 func (dsr DefaultSecretsReader) GetFirstPath() string {
-	return loadedDB.PathsInOrder[0]
+	return dsr.loadedDB.PathsInOrder[0]
 }
 
 func (dsr DefaultSecretsReader) GetEntriesForPath(path string) []secretsdb.SecretEntry {
-	return loadedDB.EntriesByPath[path]
+	return dsr.loadedDB.EntriesByPath[path]
 }
 
 func (dsr DefaultSecretsReader) WriteDBBytes() ([]byte, error) {
-	return loadedDB.WriteDBBytes(dsr.Password)
+	return dsr.loadedDB.WriteDBBytes(dsr.Password)
 }
 
 func (dsr DefaultSecretsReader) AddSecretEntry(secretEntry secretsdb.SecretEntry) {
-	loadedDB.AddSecretEntry(secretEntry)
+	dsr.loadedDB.AddSecretEntry(secretEntry)
 }
 
 func (dsr DefaultSecretsReader) Save() error {
@@ -99,7 +97,7 @@ func (dsr DefaultSecretsReader) Save() error {
 }
 
 func (dsr DefaultSecretsReader) ModifySecretEntry(originalTitle, originalGroup string, originalIsGroup bool, secretEntry secretsdb.SecretEntry) {
-	entries := loadedDB.EntriesByPath[originalGroup]
+	entries := dsr.loadedDB.EntriesByPath[originalGroup]
 	i := slices.IndexFunc(entries, func(se secretsdb.SecretEntry) bool {
 		return se.Title == originalTitle && se.IsGroup == originalIsGroup && se.Group == originalGroup
 	})
@@ -110,21 +108,21 @@ func (dsr DefaultSecretsReader) ModifySecretEntry(originalTitle, originalGroup s
 		entries[i].Password = secretEntry.Password
 		entries[i].Notes = secretEntry.Notes
 		if originalIsGroup && originalTitle != secretEntry.Title {
-			for i, path := range loadedDB.PathsInOrder {
+			for i, path := range dsr.loadedDB.PathsInOrder {
 				if strings.Contains(path, originalTitle) {
-					loadedDB.PathsInOrder[i] = strings.Replace(path, originalTitle, secretEntry.Title, 1)
+					dsr.loadedDB.PathsInOrder[i] = strings.Replace(path, originalTitle, secretEntry.Title, 1)
 				}
 			}
 
-			for keypath, secrets := range loadedDB.EntriesByPath {
+			for keypath, secrets := range dsr.loadedDB.EntriesByPath {
 				for i, entry := range secrets {
 					entry.Group = strings.Replace(entry.Group, originalTitle, secretEntry.Title, 1)
 					secrets[i] = entry
 				}
 				replacedPath := strings.Replace(keypath, originalTitle, secretEntry.Title, 1)
 				if replacedPath != keypath {
-					loadedDB.EntriesByPath[replacedPath] = loadedDB.EntriesByPath[keypath]
-					delete(loadedDB.EntriesByPath, keypath)
+					dsr.loadedDB.EntriesByPath[replacedPath] = dsr.loadedDB.EntriesByPath[keypath]
+					delete(dsr.loadedDB.EntriesByPath, keypath)
 				}
 			}
 		}
@@ -132,7 +130,7 @@ func (dsr DefaultSecretsReader) ModifySecretEntry(originalTitle, originalGroup s
 }
 
 func (dsr DefaultSecretsReader) DeleteSecretEntry(secretEntry secretsdb.SecretEntry) bool {
-	return loadedDB.DeleteSecretEntry(secretEntry)
+	return dsr.loadedDB.DeleteSecretEntry(secretEntry)
 }
 
 func (dsr DefaultSecretsReader) CreateEmptyDBBytes(masterPassword string) ([]byte, error) {

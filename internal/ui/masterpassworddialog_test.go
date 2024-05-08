@@ -3,6 +3,7 @@ package ui_test
 import (
 	"keepassui/internal/secretsreader"
 	"keepassui/internal/ui"
+	"os"
 	"testing"
 	"time"
 
@@ -49,7 +50,11 @@ func TestMasterPasswordDialog_fillIn_And_Submit(t *testing.T) {
 
 func TestMasterPasswordDialog_Should_Not_Show_A_Previously_Entered_Password(t *testing.T) {
 	w := test.NewWindow(container.NewWithoutLayout())
-	contentInBytes := make([]byte, 5)
+	contentInBytes, err := os.ReadFile("testdata/files/db.kdbx")
+
+	if err != nil {
+		t.Fatal("Could not find test DB")
+	}
 	masterPasswordDialog, _ := ui.CreateDialog(w)
 	w.Resize(fyne.NewSize(600, 600))
 
@@ -57,7 +62,7 @@ func TestMasterPasswordDialog_Should_Not_Show_A_Previously_Entered_Password(t *t
 
 	test.AssertImageMatches(t, "masterPasswordDialog_Show.png", w.Canvas().Capture())
 
-	test.Type(masterPasswordDialog.PasswordEntry, "thePassword")
+	test.Type(masterPasswordDialog.PasswordEntry, "keepassui")
 
 	masterPasswordDialog.Dialog.Submit()
 
@@ -69,7 +74,11 @@ func TestMasterPasswordDialog_Should_Not_Show_A_Previously_Entered_Password(t *t
 
 func TestMasterPasswordDialog_Calls_Listener(t *testing.T) {
 	w := test.NewWindow(container.NewWithoutLayout())
-	contentInBytes := make([]byte, 5)
+	contentInBytes, err := os.ReadFile("testdata/files/db.kdbx")
+
+	if err != nil {
+		t.Fatal("Could not find test DB")
+	}
 	masterPasswordDialog, secretsReader := ui.CreateDialog(w)
 	w.Resize(fyne.NewSize(600, 600))
 	masterPasswordDialog.ShowDialog("file://fakeKeypassDBFilePath", &contentInBytes)
