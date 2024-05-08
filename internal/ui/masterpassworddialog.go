@@ -61,7 +61,7 @@ func (m *MasterPasswordDialog) ShowDialog(uriID string, contentInBytes *[]byte) 
 
 			err = m.notify.Set(uniuri.New())
 			if err != nil {
-				slog.Error("Error notifying changes to listener", err)
+				slog.Error("Error notifying changes to listener" + err.Error())
 			}
 		}
 	}, m.parent)
