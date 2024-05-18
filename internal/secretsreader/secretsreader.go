@@ -29,7 +29,6 @@ type SecretReader interface {
 	GetUriID() string
 	GetFirstPath() string
 	GetEntriesForPath(path string) []secretsdb.SecretEntry
-	WriteDBBytes() ([]byte, error)
 	Save() error
 	AddSecretEntry(secretEntry secretsdb.SecretEntry)
 	ModifySecretEntry(originalTitle, originalGroup string, originalIsGroup bool, secretEntry secretsdb.SecretEntry)
@@ -57,16 +56,12 @@ func (dsr DefaultSecretsReader) GetEntriesForPath(path string) []secretsdb.Secre
 	return dsr.loadedDB.EntriesByPath[path]
 }
 
-func (dsr DefaultSecretsReader) WriteDBBytes() ([]byte, error) {
-	return dsr.loadedDB.WriteDBBytes(dsr.Password)
-}
-
 func (dsr DefaultSecretsReader) AddSecretEntry(secretEntry secretsdb.SecretEntry) {
 	dsr.loadedDB.AddSecretEntry(secretEntry)
 }
 
 func (dsr DefaultSecretsReader) Save() error {
-	bytes, err := dsr.WriteDBBytes()
+	bytes, err := dsr.loadedDB.WriteDBBytes(dsr.Password)
 
 	if err != nil {
 		return err
