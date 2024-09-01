@@ -96,7 +96,7 @@ func Test_ReadSecretsDBFromDBBytes_Broken_File(t *testing.T) {
 		t.Fatal("entriesGroupedByPath and pathsInOrder should be nil")
 	}
 
-	assert.EqualError(t, err, "Failed to verify HMAC for block 0")
+	assert.EqualError(t, err, "failed to verify HMAC for block 0")
 }
 
 func Test_writeDBBytes(t *testing.T) {

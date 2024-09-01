@@ -120,12 +120,11 @@ func TestNavView_NavigateToNestedFolderByTappingOnListItem(t *testing.T) {
 
 	objects := test.LaidOutObjects(navView.ListPanel.Objects[0])
 
-	// Since widget.listItem is unexported we can't use it as filter in the objects array.
-	tappable, ok := objects[40].(fyne.Tappable)
-	if ok {
-		test.Tap(tappable)
-	} else {
-		t.FailNow()
+	for _, v := range objects {
+		button, ok := v.(*widget.Button)
+		if ok && button.Icon.Name() == theme.FolderOpenIcon().Name() {
+			test.Tap(button)
+		}
 	}
 
 	time.Sleep(10 * time.Millisecond)
