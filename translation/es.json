@@ -1,0 +1,27 @@
+{
+    "Window Title": "Keepass UI",
+    "Load Keepass file": "Leer fichero Keepass",
+    "New KeepassDB": "Nuevo fichero Keepass",
+    "Enter master password": "Ingrese contraseña maestra",
+    "password": "contraseña",
+    "Error reading secrets: ": "Error al leer secretos: ",
+    "new group": "nuevo grupo",
+    "new secret": "nuevo secreto",
+    "lock db": "cerrar fichero",
+    "Change group name": "Renombrar grupo",
+    "Name": "Nombre",
+    "Cancel": "Cancelar",
+    "Confirm": "Confirmar",
+    "Title": "Título",
+    "Username": "Usuario",
+    "Password": "Contraseña",
+    "URL": "URL",
+    "Notes": "Notas",
+    "Add new group": "Agregar nuevo grupo",
+    "KeyPass DB password": "contraseña maestra",
+    "confirm password": "confirmar contraseña",
+    "Set up master password": "Establecer contraseña maestra",
+    "Wrong password? Database integrity check failed": "¿Contraseña incorrecta? La integridad del fichero keepass no se pudo verificar",
+    "OK": "Aceptar"
+
+}
