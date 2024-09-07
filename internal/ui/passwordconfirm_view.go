@@ -7,6 +7,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/driver/mobile"
+	"fyne.io/fyne/v2/lang"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -26,7 +27,7 @@ func CreatePasswordConfirmView(fileSaver FileSaver, stagerController StagerContr
 func createContainer(fileSaver FileSaver, stagerController StagerController, parent fyne.Window) *fyne.Container {
 	firstPass := widget.NewPasswordEntry()
 	firstPass.Validator = createValidator("pass")
-	firstPassItem := widget.NewFormItem("password", firstPass)
+	firstPassItem := widget.NewFormItem(lang.L("password"), firstPass)
 	secondPass := widget.NewPasswordEntry()
 	secondPass.Validator = func(s string) error {
 		if secondPass.Text == "" {
@@ -37,7 +38,7 @@ func createContainer(fileSaver FileSaver, stagerController StagerController, par
 		}
 		return nil
 	}
-	secondPassItem := widget.NewFormItem("confirm password", secondPass)
+	secondPassItem := widget.NewFormItem(lang.L("confirm password"), secondPass)
 
 	form := widget.NewForm(firstPassItem, secondPassItem)
 
@@ -51,7 +52,10 @@ func createContainer(fileSaver FileSaver, stagerController StagerController, par
 		}
 	}
 
-	container := container.NewBorder(widget.NewLabel("Set up master password"), nil, nil, nil, form)
+	form.SubmitText = lang.L("Confirm")
+	form.CancelText = lang.L("Cancel")
+
+	container := container.NewBorder(widget.NewLabel(lang.L("Set up master password")), nil, nil, nil, form)
 	return container
 }
 

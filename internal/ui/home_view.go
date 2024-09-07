@@ -5,6 +5,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/driver/mobile"
+	"fyne.io/fyne/v2/lang"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
@@ -18,7 +19,7 @@ type HomeView struct {
 }
 
 func CreateHomeView(dbFileEntry *DBFileEntry, stagerController StagerController, parent fyne.Window) HomeView {
-	button := widget.NewButtonWithIcon("New KeepassDB", theme.DocumentCreateIcon(),
+	button := widget.NewButtonWithIcon(lang.L("New KeepassDB"), theme.DocumentCreateIcon(),
 		func() {
 			err := stagerController.TakeOver("PasswordConfirm")
 			if err != nil {

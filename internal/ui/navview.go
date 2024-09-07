@@ -11,6 +11,7 @@ import (
 	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/driver/mobile"
+	"fyne.io/fyne/v2/lang"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
@@ -93,7 +94,7 @@ func (n *NavView) UpdateNavView(path string) {
 	n.GroupCreateButton.OnTapped = func() {
 		groupNameEntry := widget.NewEntry()
 		groupNameEntry.Validator = createValidator("Group")
-		form := dialog.NewForm("Add new group", "Confirm", "Cancel", []*widget.FormItem{widget.NewFormItem("Name", groupNameEntry)}, func(valid bool) {
+		form := dialog.NewForm(lang.L("Add new group"), lang.L("Confirm"), lang.L("Cancel"), []*widget.FormItem{widget.NewFormItem(lang.L("Name"), groupNameEntry)}, func(valid bool) {
 			if valid {
 				newGroup := secretsdb.SecretEntry{Path: pathComponents, Group: path, Title: groupNameEntry.Text, IsGroup: true}
 				n.secretsReader.AddSecretEntry(newGroup)
@@ -182,7 +183,7 @@ func createListNav(path string, parent fyne.Window, navView *NavView) (*widget.L
 					groupNameEntry := widget.NewEntry()
 					groupNameEntry.Text = secret.Title
 					groupNameEntry.Validator = createValidator("Group")
-					form := dialog.NewForm("Change group name", "Confirm", "Cancel", []*widget.FormItem{widget.NewFormItem("Name", groupNameEntry)}, func(valid bool) {
+					form := dialog.NewForm(lang.L("Change group name"), lang.L("Confirm"), lang.L("Cancel"), []*widget.FormItem{widget.NewFormItem(lang.L("Name"), groupNameEntry)}, func(valid bool) {
 						if valid {
 							originalTitle := secret.Title
 							secret.Title = groupNameEntry.Text
@@ -258,14 +259,14 @@ func CreateNavView(secretsReader secretsreader.SecretReader, addEntryView EntryU
 		generalButtons,
 	), container.NewPadded(breadcrumbsWithBackButton), nil, nil, nil)
 
-	groupCreateButton := widget.NewButtonWithIcon("new group", theme.FolderNewIcon(), func() {
+	groupCreateButton := widget.NewButtonWithIcon(lang.L("new group"), theme.FolderNewIcon(), func() {
 
 	})
-	secretEntryCreateButton := widget.NewButtonWithIcon("new secret", theme.DocumentCreateIcon(), func() {
+	secretEntryCreateButton := widget.NewButtonWithIcon(lang.L("new secret"), theme.DocumentCreateIcon(), func() {
 
 	})
 
-	lockDBButton := widget.NewButtonWithIcon("lock db", theme.LogoutIcon(), func() {
+	lockDBButton := widget.NewButtonWithIcon(lang.L("lock db"), theme.LogoutIcon(), func() {
 		goToHomeView(stagerController, parent)
 	})
 

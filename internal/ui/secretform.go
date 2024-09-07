@@ -6,6 +6,7 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/lang"
 	"fyne.io/fyne/v2/test"
 	"fyne.io/fyne/v2/widget"
 )
@@ -50,11 +51,14 @@ func CreateSecretForm() SecretForm {
 	notesEntry.Validator = createValidator("Notes")
 
 	details := widget.NewForm(
-		widget.NewFormItem("Title", titleEntry),
-		widget.NewFormItem("Username", userNameEntry),
-		widget.NewFormItem("Password", passwordEntry),
-		widget.NewFormItem("URL", urlEntry),
-		widget.NewFormItem("Notes", notesEntry))
+		widget.NewFormItem(lang.L("Title"), titleEntry),
+		widget.NewFormItem(lang.L("Username"), userNameEntry),
+		widget.NewFormItem(lang.L("Password"), passwordEntry),
+		widget.NewFormItem(lang.L("URL"), urlEntry),
+		widget.NewFormItem(lang.L("Notes"), notesEntry))
+
+	details.SubmitText = lang.L("Confirm")
+	details.CancelText = lang.L("Cancel")
 
 	formContainer := container.NewStack(details)
 

@@ -7,6 +7,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/lang"
 	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
@@ -23,7 +24,7 @@ func CreateDBFileEntry(masterPasswordDialog *MasterPasswordDialog, parent fyne.W
 
 func CreateDBFileEntryWithLocation(masterPasswordDialog *MasterPasswordDialog, parent fyne.Window, location fyne.ListableURI) DBFileEntry {
 
-	findFileButton := widget.NewButtonWithIcon("Load Keepass file", theme.SearchIcon(), func() {
+	findFileButton := widget.NewButtonWithIcon(lang.L("Load Keepass file"), theme.SearchIcon(), func() {
 		fileOpen := createFileOpenDialog(masterPasswordDialog, parent, location)
 		fileOpen.Show()
 	})

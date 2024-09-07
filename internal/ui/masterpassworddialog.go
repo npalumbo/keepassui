@@ -8,6 +8,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/lang"
 	"fyne.io/fyne/v2/widget"
 	"github.com/dchest/uniuri"
 )
@@ -24,8 +25,8 @@ type MasterPasswordDialog struct {
 func CreateDialog(parent fyne.Window) (MasterPasswordDialog, secretsreader.SecretReader) {
 	formItems := []*widget.FormItem{}
 	passwordEntry := widget.NewPasswordEntry()
-	passwordEntry.SetPlaceHolder("KeyPass DB password")
-	formItems = append(formItems, widget.NewFormItem("password", passwordEntry))
+	passwordEntry.SetPlaceHolder(lang.L("KeyPass DB password"))
+	formItems = append(formItems, widget.NewFormItem(lang.L("password"), passwordEntry))
 
 	secretsReader := secretsreader.CreateDefaultSecretsReader("", nil, "")
 
@@ -45,7 +46,7 @@ func (m *MasterPasswordDialog) AddListener(l binding.DataListener) {
 }
 
 func (m *MasterPasswordDialog) ShowDialog(uriID string, contentInBytes *[]byte) {
-	m.Dialog = dialog.NewForm("Enter master password", "Confirm", "Cancel", m.formItems, func(valid bool) {
+	m.Dialog = dialog.NewForm(lang.L("Enter master password"), lang.L("Confirm"), lang.L("Cancel"), m.formItems, func(valid bool) {
 		if valid {
 			m.secretsReader.ContentInBytes = *contentInBytes
 			m.secretsReader.UriID = uriID
@@ -55,7 +56,7 @@ func (m *MasterPasswordDialog) ShowDialog(uriID string, contentInBytes *[]byte) 
 			err := m.secretsReader.ReadEntriesFromContentGroupedByPath()
 
 			if err != nil {
-				dialog.ShowError(errors.New("Error reading secrets: "+err.Error()), m.parent)
+				dialog.ShowError(errors.New(lang.L("Error reading secrets: ")+lang.L(err.Error())), m.parent)
 				return
 			}
 
