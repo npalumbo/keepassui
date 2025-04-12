@@ -101,6 +101,7 @@ func (dsr DefaultSecretsReader) ModifySecretEntry(originalTitle, originalGroup s
 		entries[i].Title = secretEntry.Title
 		entries[i].Username = secretEntry.Username
 		entries[i].Password = secretEntry.Password
+		entries[i].Url = secretEntry.Url
 		entries[i].Notes = secretEntry.Notes
 		if originalIsGroup && originalTitle != secretEntry.Title {
 			for i, path := range dsr.loadedDB.PathsInOrder {
