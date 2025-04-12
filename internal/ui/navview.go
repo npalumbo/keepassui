@@ -209,6 +209,7 @@ func createListNav(path string, parent fyne.Window, navView *NavView) (*widget.L
 				openGroupPadddedContainer.Hide()
 				icon.SetResource(theme.DocumentIcon())
 				copyPasswordButton.OnTapped = func() {
+					//nolint:staticcheck // parent.Clipboard is deprecated, but fixing requires a significant refactor
 					parent.Clipboard().SetContent(secret.Password)
 				}
 				editButton.OnTapped = func() {
