@@ -41,7 +41,7 @@ package-android: ## Generates an android APK file
 
 ##@ Create Android Release (AAB file)
 release-android: ## Generates an android AAB file
-	ANDROID_NDK_HOME=~/tools/android-ndk-r27 ANDROID_HOME=~/tools/android-sdk fyne release -os android --key-store ~/dev/gplay.keystore --key-name alias
+	ANDROID_NDK_HOME=~/tools/android-ndk-r27 ANDROID_HOME=~/tools/android-sdk fyne release -os android --keystore ~/dev/gplay.keystore --key-name alias
 
 ##@ Building
 build-multi-arch: ## Builds keepassui go binary for linux and darwin. Outputs to `bin/keepassui-$GOOS-$GOARCH`.

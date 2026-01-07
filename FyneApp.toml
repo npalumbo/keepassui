@@ -1,6 +1,6 @@
 [Details]
-  Icon = "password-key.256x256.png"
-  Name = "KeepassUI"
-  ID = "com.keepassui"
-  Version = "0.0.1"
-  Build = 37
+Icon = "password-key.256x256.png"
+Name = "KeepassUI"
+ID = "com.npalumbodev"
+Version = "0.0.1"
+Build = 39
